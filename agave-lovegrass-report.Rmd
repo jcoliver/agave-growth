@@ -1,0 +1,141 @@
+---
+title: "Agaves & Lehmann Lovegrass"
+author: "Jeff Oliver"
+date: "10/2/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+suppressPackageStartupMessages(library(lme4))
+```
+
+A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_).
+
+```{r data-import}
+coronado_data <- read.csv(file = "data/coronado-data-clean.csv")
+
+# Treatments are sometimes referred to in different ways, i.e. J+S and S+J are 
+# both present in data set, but mean the same thing.
+coronado_data$Treatment[coronado_data$Treatment == "S+J"] <- "J+S"
+coronado_data$Treatment[coronado_data$Treatment == "H+J"] <- "J+H" # may not occur
+coronado_data$Treatment[coronado_data$Treatment == "W+J"] <- "J+W"
+coronado_data$Treatment[coronado_data$Treatment == "W+S"] <- "S+W"
+coronado_data$Treatment <- factor(as.character(coronado_data$Treatment))
+
+# The reference treatment should be control, C.
+
+# NOTE: in the data processing, discovered that plot 1, row 3, plant 20 Lehmann
+# lovegrass was incorrectly labeled as J+H treatment; changed to W in 
+# coronado-data-clean
+
+# NOTE: missing values in plot 2, row 1 for live_leaf_cover of Lehmann lovegrass
+# rows; changed to NA in coronado-data-clean
+
+# Add "Status" column to indicate live or dead for agaves
+coronado_data$Status <- NA
+coronado_data$Status[coronado_data$Species == "agave"] <- 1
+coronado_data$Status[coronado_data$live_leaf_number %in% c("D", "D/P")] <- 0
+```
+
+## 1. How does treatment affect agave survival?
+
+"Survival" is measured two ways: 
+
+1. The total number of live plants in a row (all those not marked as "D(ead)")
+2. The number of leaves on agave plants; the number of agaves measured varies among plot/treatment combinations
+
+There are nine total treatments, including control.
+
+### 1.1 How does treatment affect agave survival _s.s._?
+
+$$
+Survival = \beta_0 + \beta_1 \times Treatment + b_0
+$$
+
+Where $b_0$ is the random intercept for plot. Data will take the structure:
+
+| Plot | Treatment | Plant status      |
+|:-----|:---------:|:-----------------:|
+| 1    | S+W       | Live              |
+| 1    | H         | Dead              |
+| ...  | ...       | ...               |
+
+This will be logistic regression, where plant status is a binary response variable.
+
+```{r survival-treatment}
+# Only need agave data for this analysis
+agave_data <- coronado_data[coronado_data$Species == "agave", ]
+
+# An attempt at a GLMM, to affort plot randome effects (does not seem to work)
+# survival_model <- glmer(formula = Status ~ Treatment + (1|plot), 
+#                         data = agave_data, 
+#                         family = binomial(link = "logit"))
+
+# Ignoring plot effects (which may kinda be necessary)
+survival_model <- glm(formula = Status ~ Treatment,
+                      data = agave_data,
+                      family = binomial(link = "logit"))
+# summary(survival_model)
+
+```
+
+### 1.2. How does treatment affect agave size?
+
+$$
+\# Leaves = \beta_0 + \beta_1 \times Treatment + b_0
+$$
+
+Where $b_0$ is the random intercept for plot. Data will take the structure:
+
+| Plot | Treatment | Number of leaves  |
+|:-----|:---------:|:-----------------:|
+| 1    | H         | 10                |
+| 1    | H         | 7                 |
+| ...  | ...       | ...               |
+| 1    | J+H       | 6                 |
+| ...  | ...       | ...               |
+
+_Note_: There are several Plot by Treatment combinations with zero measurement for leaf count. This could potentially undermine this particular analysis.
+
+## 2. How do the W and H treatments and agave size affect the percent of Lehmann cover?
+
+$$
+\% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves + b_0
+$$
+
+Where $b_0$ is the random intercept for plot. Data will take the structure:
+
+| Plot | Treatment | Number of leaves  | % Cover | 
+|:-----|:---------:|:-----------------:|:-------:|
+| 1    | H         | 10                | 5       |
+| 1    | H         | 7                 | 12      |
+| ...  | ...       | ...               | ...     |
+
+For this question, _only_ the samples from H and W treatments will be considered. Those samples from treatments that are a combination of H/W and other treatments (e.g. S+W) are _not_ included. Similar to question 1.2, there are several H/W treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
+
+## 3. How does percent cover affect survival and size of agaves?
+
+### 3.1 How does percent cover affect agave survival?
+
+Where survival is the total number of agaves alive. This is probably best addressed with an expanded version of the model presented in 1.1, above.
+
+$$
+Survival = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
+$$
+
+Where $b_0$ is the random intercept for plot. Data will take the structure:
+
+| Plot | Treatment | Plant status      | % Cover |
+|:-----|:---------:|:-----------------:|:-------:|
+| 1    | S+W       | Live              | 5       |
+| 1    | H         | Dead              | 4       |
+| ...  | ...       | ...               | ...     |
+
+### 3.2 How does percent cover affect agave size?
+
+$$
+\# Leaves = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
+$$
+
+Where $b_0$ is the random intercept for plot. This is not likely feasible, given missing data concerns as addressed above.

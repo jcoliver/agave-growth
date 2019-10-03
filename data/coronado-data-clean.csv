@@ -1,0 +1,501 @@
+plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
+1,1,4,agave,S+W,P,NA
+1,1,8,agave,S+W,L,NA
+1,1,12,agave,S+W,P,NA
+1,1,16,agave,S+W,P,NA
+1,1,20,agave,S+W,P,NA
+1,1,4,Lehmann lovegarss,S+W,NA,25
+1,1,8,Lehmann lovegarss,S+W,NA,43
+1,1,12,Lehmann lovegarss,S+W,NA,35
+1,1,16,Lehmann lovegarss,S+W,NA,67
+1,1,20,Lehmann lovegarss,S+W,NA,66
+1,2,4,agave,H,NA,NA
+1,2,8,agave,H,10,NA
+1,2,12,agave,H,P,NA
+1,2,16,agave,H,10,NA
+1,2,20,agave,H,7,NA
+1,2,4,Lehmann lovegarss,H,NA,12
+1,2,8,Lehmann lovegarss,H,NA,12
+1,2,12,Lehmann lovegarss,H,NA,12
+1,2,16,Lehmann lovegarss,H,NA,12
+1,2,20,Lehmann lovegarss,H,NA,12
+1,3,4,agave,W,P,NA
+1,3,8,agave,W,P,NA
+1,3,12,agave,W,P,NA
+1,3,16,agave,W,P,NA
+1,3,20,agave,W,NA,NA
+1,3,4,Lehmann lovegarss,W,NA,7
+1,3,8,Lehmann lovegarss,W,NA,7
+1,3,12,Lehmann lovegarss,W,NA,6
+1,3,16,Lehmann lovegarss,W,NA,20
+1,3,20,Lehmann lovegarss,W,NA,0
+1,4,4,agave,J+H,P,NA
+1,4,8,agave,J+H,P,NA
+1,4,12,agave,J+H,6,NA
+1,4,16,agave,J+H,6,NA
+1,4,20,agave,J+H,D,NA
+1,4,4,Lehmann lovegarss,J+H,NA,13
+1,4,8,Lehmann lovegarss,J+H,NA,4
+1,4,12,Lehmann lovegarss,J+H,NA,8
+1,4,16,Lehmann lovegarss,J+H,NA,23
+1,4,20,Lehmann lovegarss,J+H,NA,10
+1,5,4,agave,S+W,NA,NA
+1,5,8,agave,S+W,NA,NA
+1,5,12,agave,S+W,NA,NA
+1,5,16,agave,S+W,NA,NA
+1,5,20,agave,S+W,NA,NA
+1,5,4,Lehmann lovegarss,S+W,NA,8
+1,5,8,Lehmann lovegarss,S+W,NA,7
+1,5,12,Lehmann lovegarss,S+W,NA,2
+1,5,16,Lehmann lovegarss,S+W,NA,17
+1,5,20,Lehmann lovegarss,S+W,NA,5
+1,6,4,agave,W+J,D,NA
+1,6,8,agave,W+J,7,NA
+1,6,12,agave,W+J,14,NA
+1,6,16,agave,W+J,7,NA
+1,6,20,agave,W+J,NA,NA
+1,6,4,Lehmann lovegarss,W+J,NA,12
+1,6,8,Lehmann lovegarss,W+J,NA,15
+1,6,12,Lehmann lovegarss,W+J,NA,30
+1,6,16,Lehmann lovegarss,W+J,NA,22
+1,6,20,Lehmann lovegarss,W+J,NA,17
+1,7,4,agave,C,D,NA
+1,7,8,agave,C,7,NA
+1,7,12,agave,C,5,NA
+1,7,16,agave,C,D,NA
+1,7,20,agave,C,P,NA
+1,7,4,Lehmann lovegarss,C,NA,8
+1,7,8,Lehmann lovegarss,C,NA,14
+1,7,12,Lehmann lovegarss,C,NA,45
+1,7,16,Lehmann lovegarss,C,NA,33
+1,7,20,Lehmann lovegarss,C,NA,45
+1,8,4,agave,S,9,NA
+1,8,8,agave,S,17,NA
+1,8,12,agave,S,D,NA
+1,8,16,agave,S,12,NA
+1,8,20,agave,S,11,NA
+1,8,4,Lehmann lovegarss,S,NA,7
+1,8,8,Lehmann lovegarss,S,NA,10
+1,8,12,Lehmann lovegarss,S,NA,10
+1,8,16,Lehmann lovegarss,S,NA,18
+1,8,20,Lehmann lovegarss,S,NA,12
+1,9,4,agave,J+S,4,NA
+1,9,8,agave,J+S,NA,NA
+1,9,12,agave,J+S,2,NA
+1,9,16,agave,J+S,9,NA
+1,9,20,agave,J+S,NA,NA
+1,9,4,Lehmann lovegarss,J+S,NA,30
+1,9,8,Lehmann lovegarss,J+S,NA,60
+1,9,12,Lehmann lovegarss,J+S,NA,8
+1,9,16,Lehmann lovegarss,J+S,NA,40
+1,9,20,Lehmann lovegarss,J+S,NA,NA
+1,10,4,agave,J,6,NA
+1,10,8,agave,J,NA,NA
+1,10,12,agave,J,NA,NA
+1,10,16,agave,J,NA,NA
+1,10,20,agave,J,NA,NA
+1,10,4,Lehmann lovegarss,J,NA,13
+1,10,8,Lehmann lovegarss,J,NA,12
+1,10,12,Lehmann lovegarss,J,NA,15
+1,10,16,Lehmann lovegarss,J,NA,25
+1,10,20,Lehmann lovegarss,J,NA,30
+2,1,4,agave,W,P,NA
+2,1,8,agave,W,P,NA
+2,1,12,agave,W,P,NA
+2,1,16,agave,W,P,NA
+2,1,20,agave,W,NA,NA
+2,1,4,Lehmann lovegarss,W,NA,13
+2,1,8,Lehmann lovegarss,W,NA,8
+2,1,12,Lehmann lovegarss,W,NA,5
+2,1,16,Lehmann lovegarss,W,NA,9
+2,1,20,Lehmann lovegarss,W,NA,11
+2,2,4,agave,J,5,NA
+2,2,8,agave,J,P,NA
+2,2,12,agave,J,6,NA
+2,2,16,agave,J,P,NA
+2,2,20,agave,J,P,NA
+2,2,4,Lehmann lovegarss,J,NA,47
+2,2,8,Lehmann lovegarss,J,NA,9
+2,2,12,Lehmann lovegarss,J,NA,13
+2,2,16,Lehmann lovegarss,J,NA,5
+2,2,20,Lehmann lovegarss,J,NA,52
+2,3,4,agave,C,4,NA
+2,3,8,agave,C,5,NA
+2,3,12,agave,C,P,NA
+2,3,16,agave,C,5,NA
+2,3,20,agave,C,P,NA
+2,3,4,Lehmann lovegarss,C,NA,65
+2,3,8,Lehmann lovegarss,C,NA,16
+2,3,12,Lehmann lovegarss,C,NA,63
+2,3,16,Lehmann lovegarss,C,NA,18
+2,3,20,Lehmann lovegarss,C,NA,11
+2,4,4,agave,H,9,NA
+2,4,8,agave,H,7,NA
+2,4,12,agave,H,P,NA
+2,4,16,agave,H,4,NA
+2,4,20,agave,H,P,NA
+2,4,4,Lehmann lovegarss,H,NA,1
+2,4,8,Lehmann lovegarss,H,NA,6
+2,4,12,Lehmann lovegarss,H,NA,5
+2,4,16,Lehmann lovegarss,H,NA,4
+2,4,20,Lehmann lovegarss,H,NA,9
+2,5,4,agave,J+W,6,NA
+2,5,8,agave,J+W,9,NA
+2,5,12,agave,J+W,6,NA
+2,5,16,agave,J+W,5,NA
+2,5,20,agave,J+W,2,NA
+2,5,4,Lehmann lovegarss,J+W,NA,18
+2,5,8,Lehmann lovegarss,J+W,NA,20
+2,5,12,Lehmann lovegarss,J+W,NA,14
+2,5,16,Lehmann lovegarss,J+W,NA,10
+2,5,20,Lehmann lovegarss,J+W,NA,11
+2,6,4,agave,J+H,9,NA
+2,6,8,agave,J+H,NA,NA
+2,6,12,agave,J+H,P,NA
+2,6,16,agave,J+H,P,NA
+2,6,20,agave,J+H,P,NA
+2,6,4,Lehmann lovegarss,J+H,NA,5
+2,6,8,Lehmann lovegarss,J+H,NA,4
+2,6,12,Lehmann lovegarss,J+H,NA,12
+2,6,16,Lehmann lovegarss,J+H,NA,13
+2,6,20,Lehmann lovegarss,J+H,NA,5
+2,7,4,agave,S+J,11,NA
+2,7,8,agave,S+J,8,NA
+2,7,12,agave,S+J,8,NA
+2,7,16,agave,S+J,5,NA
+2,7,20,agave,S+J,5,NA
+2,7,4,Lehmann lovegarss,S+J,NA,38
+2,7,8,Lehmann lovegarss,S+J,NA,23
+2,7,12,Lehmann lovegarss,S+J,NA,28
+2,7,16,Lehmann lovegarss,S+J,NA,52
+2,7,20,Lehmann lovegarss,S+J,NA,22
+2,8,4,agave,S+H,P,NA
+2,8,8,agave,S+H,P,NA
+2,8,12,agave,S+H,P,NA
+2,8,16,agave,S+H,D,NA
+2,8,20,agave,S+H,D,NA
+2,8,4,Lehmann lovegarss,S+H,NA,3
+2,8,8,Lehmann lovegarss,S+H,NA,14
+2,8,12,Lehmann lovegarss,S+H,NA,6
+2,8,16,Lehmann lovegarss,S+H,NA,3
+2,8,20,Lehmann lovegarss,S+H,NA,10
+2,9,4,agave,S+W,P,NA
+2,9,8,agave,S+W,6,NA
+2,9,12,agave,S+W,8,NA
+2,9,16,agave,S+W,P,NA
+2,9,20,agave,S+W,NA,NA
+2,9,4,Lehmann lovegarss,S+W,NA,30
+2,9,8,Lehmann lovegarss,S+W,NA,28
+2,9,12,Lehmann lovegarss,S+W,NA,25
+2,9,16,Lehmann lovegarss,S+W,NA,33
+2,9,20,Lehmann lovegarss,S+W,NA,30
+2,10,4,agave,S,NA,NA
+2,10,8,agave,S,7,NA
+2,10,12,agave,S,7,NA
+2,10,16,agave,S,5,NA
+2,10,20,agave,S,P,NA
+2,10,4,Lehmann lovegarss,S,NA,4
+2,10,8,Lehmann lovegarss,S,NA,26
+2,10,12,Lehmann lovegarss,S,NA,36
+2,10,16,Lehmann lovegarss,S,NA,55
+2,10,20,Lehmann lovegarss,S,NA,74
+3,1,4,agave,J+W,P,NA
+3,1,8,agave,J+W,P,NA
+3,1,12,agave,J+W,P,NA
+3,1,16,agave,J+W,P,NA
+3,1,20,agave,J+W,P,NA
+3,1,4,Lehmann lovegarss,J+W,NA,66
+3,1,8,Lehmann lovegarss,J+W,NA,56
+3,1,12,Lehmann lovegarss,J+W,NA,68
+3,1,16,Lehmann lovegarss,J+W,NA,67
+3,1,20,Lehmann lovegarss,J+W,NA,40
+3,2,4,agave,J+W,P,NA
+3,2,8,agave,J+W,P,NA
+3,2,12,agave,J+W,P,NA
+3,2,16,agave,J+W,P,NA
+3,2,20,agave,J+W,P,NA
+3,2,4,Lehmann lovegarss,J+W,NA,82
+3,2,8,Lehmann lovegarss,J+W,NA,48
+3,2,12,Lehmann lovegarss,J+W,NA,65
+3,2,16,Lehmann lovegarss,J+W,NA,72
+3,2,20,Lehmann lovegarss,J+W,NA,67
+3,3,4,agave,S+H,P,NA
+3,3,8,agave,S+H,P,NA
+3,3,12,agave,S+H,P,NA
+3,3,16,agave,S+H,P,NA
+3,3,20,agave,S+H,P,NA
+3,3,4,Lehmann lovegarss,S+H,NA,33
+3,3,8,Lehmann lovegarss,S+H,NA,27
+3,3,12,Lehmann lovegarss,S+H,NA,23
+3,3,16,Lehmann lovegarss,S+H,NA,23
+3,3,20,Lehmann lovegarss,S+H,NA,35
+3,4,4,agave,H,P,NA
+3,4,8,agave,H,P,NA
+3,4,12,agave,H,P,NA
+3,4,16,agave,H,P,NA
+3,4,20,agave,H,P,NA
+3,4,4,Lehmann lovegarss,H,NA,28
+3,4,8,Lehmann lovegarss,H,NA,51
+3,4,12,Lehmann lovegarss,H,NA,55
+3,4,16,Lehmann lovegarss,H,NA,42
+3,4,20,Lehmann lovegarss,H,NA,70
+3,5,4,agave,C,P,NA
+3,5,8,agave,C,P,NA
+3,5,12,agave,C,P,NA
+3,5,16,agave,C,P,NA
+3,5,20,agave,C,P,NA
+3,5,4,Lehmann lovegarss,C,NA,48
+3,5,8,Lehmann lovegarss,C,NA,65
+3,5,12,Lehmann lovegarss,C,NA,40
+3,5,16,Lehmann lovegarss,C,NA,83
+3,5,20,Lehmann lovegarss,C,NA,65
+3,6,4,agave,J+H,P,NA
+3,6,8,agave,J+H,P,NA
+3,6,12,agave,J+H,P,NA
+3,6,16,agave,J+H,P,NA
+3,6,20,agave,J+H,P,NA
+3,6,4,Lehmann lovegarss,J+H,NA,7
+3,6,8,Lehmann lovegarss,J+H,NA,3
+3,6,12,Lehmann lovegarss,J+H,NA,7
+3,6,16,Lehmann lovegarss,J+H,NA,5
+3,6,20,Lehmann lovegarss,J+H,NA,2
+3,7,4,agave,S+W,P,NA
+3,7,8,agave,S+W,P,NA
+3,7,12,agave,S+W,P,NA
+3,7,16,agave,S+W,P,NA
+3,7,20,agave,S+W,P,NA
+3,7,4,Lehmann lovegarss,S+W,NA,22
+3,7,8,Lehmann lovegarss,S+W,NA,18
+3,7,12,Lehmann lovegarss,S+W,NA,9
+3,7,16,Lehmann lovegarss,S+W,NA,12
+3,7,20,Lehmann lovegarss,S+W,NA,8
+3,8,4,agave,S+J,P,NA
+3,8,8,agave,S+J,6,NA
+3,8,12,agave,S+J,7,NA
+3,8,16,agave,S+J,8,NA
+3,8,20,agave,S+J,P,NA
+3,8,4,Lehmann lovegarss,S+J,NA,13
+3,8,8,Lehmann lovegarss,S+J,NA,6
+3,8,12,Lehmann lovegarss,S+J,NA,16
+3,8,16,Lehmann lovegarss,S+J,NA,20
+3,8,20,Lehmann lovegarss,S+J,NA,12
+3,9,4,agave,S,P,NA
+3,9,8,agave,S,P,NA
+3,9,12,agave,S,8,NA
+3,9,16,agave,S,8,NA
+3,9,20,agave,S,P,NA
+3,9,4,Lehmann lovegarss,S,NA,22
+3,9,8,Lehmann lovegarss,S,NA,23
+3,9,12,Lehmann lovegarss,S,NA,11
+3,9,16,Lehmann lovegarss,S,NA,50
+3,9,20,Lehmann lovegarss,S,NA,11
+3,10,4,agave,J,P,NA
+3,10,8,agave,J,P,NA
+3,10,12,agave,J,P,NA
+3,10,16,agave,J,P,NA
+3,10,20,agave,J,P,NA
+3,10,4,Lehmann lovegarss,J,NA,25
+3,10,8,Lehmann lovegarss,J,NA,18
+3,10,12,Lehmann lovegarss,J,NA,15
+3,10,16,Lehmann lovegarss,J,NA,9
+3,10,20,Lehmann lovegarss,J,NA,8
+4,1,4,agave,S+W,P,NA
+4,1,8,agave,S+W,P,NA
+4,1,12,agave,S+W,D/P,NA
+4,1,16,agave,S+W,P,NA
+4,1,20,agave,S+W,P,NA
+4,1,4,Lehmann lovegarss,S+W,NA,10
+4,1,8,Lehmann lovegarss,S+W,NA,11
+4,1,12,Lehmann lovegarss,S+W,NA,D/10
+4,1,16,Lehmann lovegarss,S+W,NA,11
+4,1,20,Lehmann lovegarss,S+W,NA,15
+4,2,4,agave,J+H,L8,NA
+4,2,8,agave,J+H,P,NA
+4,2,12,agave,J+H,D,NA
+4,2,16,agave,J+H,P,NA
+4,2,20,agave,J+H,P,NA
+4,2,4,Lehmann lovegarss,J+H,NA,10
+4,2,8,Lehmann lovegarss,J+H,NA,3
+4,2,12,Lehmann lovegarss,J+H,NA,D/D 6
+4,2,16,Lehmann lovegarss,J+H,NA,3
+4,2,20,Lehmann lovegarss,J+H,NA,3
+4,3,4,agave,S+H,5,NA
+4,3,8,agave,S+H,P,NA
+4,3,12,agave,S+H,P,NA
+4,3,16,agave,S+H,8,NA
+4,3,20,agave,S+H,P,NA
+4,3,4,Lehmann lovegarss,S+H,NA,8
+4,3,8,Lehmann lovegarss,S+H,NA,12
+4,3,12,Lehmann lovegarss,S+H,NA,4
+4,3,16,Lehmann lovegarss,S+H,NA,5
+4,3,20,Lehmann lovegarss,S+H,NA,5
+4,4,4,agave,S,L3,NA
+4,4,8,agave,S,L3,NA
+4,4,12,agave,S,L9,NA
+4,4,16,agave,S,L9,NA
+4,4,20,agave,S,P,NA
+4,4,4,Lehmann lovegarss,S,NA,38
+4,4,8,Lehmann lovegarss,S,NA,35
+4,4,12,Lehmann lovegarss,S,NA,33
+4,4,16,Lehmann lovegarss,S,NA,30
+4,4,20,Lehmann lovegarss,S,NA,45
+4,5,4,agave,C,P,NA
+4,5,8,agave,C,L3,NA
+4,5,12,agave,C,"Shaded under tree, L6",NA
+4,5,16,agave,C,P,NA
+4,5,20,agave,C,L4,NA
+4,5,4,Lehmann lovegarss,C,NA,52
+4,5,8,Lehmann lovegarss,C,NA,33
+4,5,12,Lehmann lovegarss,C,NA,0
+4,5,16,Lehmann lovegarss,C,NA,20
+4,5,20,Lehmann lovegarss,C,NA,36
+4,6,4,agave,J+S,L9,NA
+4,6,8,agave,J+S,L8,NA
+4,6,12,agave,J+S,P,NA
+4,6,16,agave,J+S,L15,NA
+4,6,20,agave,J+S,13,NA
+4,6,4,Lehmann lovegarss,J+S,NA,33
+4,6,8,Lehmann lovegarss,J+S,NA,22
+4,6,12,Lehmann lovegarss,J+S,NA,2
+4,6,16,Lehmann lovegarss,J+S,NA,39
+4,6,20,Lehmann lovegarss,J+S,NA,15
+4,7,4,agave,H,P,NA
+4,7,8,agave,H,P,NA
+4,7,12,agave,H,L4,NA
+4,7,16,agave,H,L8,NA
+4,7,20,agave,H,P,NA
+4,7,4,Lehmann lovegarss,H,NA,8
+4,7,8,Lehmann lovegarss,H,NA,3
+4,7,12,Lehmann lovegarss,H,NA,2
+4,7,16,Lehmann lovegarss,H,NA,3
+4,7,20,Lehmann lovegarss,H,NA,7
+4,8,4,agave,W+J,L6,NA
+4,8,8,agave,W+J,L7,NA
+4,8,12,agave,W+J,L10,NA
+4,8,16,agave,W+J,L4,NA
+4,8,20,agave,W+J,L10,NA
+4,8,4,Lehmann lovegarss,W+J,NA,10
+4,8,8,Lehmann lovegarss,W+J,NA,15
+4,8,12,Lehmann lovegarss,W+J,NA,10
+4,8,16,Lehmann lovegarss,W+J,NA,12
+4,8,20,Lehmann lovegarss,W+J,NA,6
+4,9,4,agave,W,P,NA
+4,9,8,agave,W,P,NA
+4,9,12,agave,W,P,NA
+4,9,16,agave,W,L8,NA
+4,9,20,agave,W,P,NA
+4,9,4,Lehmann lovegarss,W,NA,13
+4,9,8,Lehmann lovegarss,W,NA,2
+4,9,12,Lehmann lovegarss,W,NA,5
+4,9,16,Lehmann lovegarss,W,NA,4
+4,9,20,Lehmann lovegarss,W,NA,9
+4,10,4,agave,J,P,NA
+4,10,8,agave,J,P,NA
+4,10,12,agave,J,P,NA
+4,10,16,agave,J,P,NA
+4,10,20,agave,J,P,NA
+4,10,4,Lehmann lovegarss,J,NA,10
+4,10,8,Lehmann lovegarss,J,NA,13
+4,10,12,Lehmann lovegarss,J,NA,12
+4,10,16,Lehmann lovegarss,J,NA,8
+4,10,20,Lehmann lovegarss,J,NA,4
+5,1,4,agave,NA,P,NA
+5,1,8,agave,NA,P,NA
+5,1,12,agave,NA,P,NA
+5,1,16,agave,NA,D/P,NA
+5,1,20,agave,NA,P,NA
+5,1,4,Lehmann lovegarss,NA,NA,12
+5,1,8,Lehmann lovegarss,NA,NA,18
+5,1,12,Lehmann lovegarss,NA,NA,20
+5,1,16,Lehmann lovegarss,NA,NA,35
+5,1,20,Lehmann lovegarss,NA,NA,9
+5,2,4,agave,S,P,NA
+5,2,8,agave,S,7,NA
+5,2,12,agave,S,10,NA
+5,2,16,agave,S,P,NA
+5,2,20,agave,S,P,NA
+5,2,4,Lehmann lovegarss,S,NA,22
+5,2,8,Lehmann lovegarss,S,NA,23
+5,2,12,Lehmann lovegarss,S,NA,15
+5,2,16,Lehmann lovegarss,S,NA,13
+5,2,20,Lehmann lovegarss,S,NA,20
+5,3,4,agave,S+H,P,NA
+5,3,8,agave,S+H,D/P,NA
+5,3,12,agave,S+H,6,NA
+5,3,16,agave,S+H,P,NA
+5,3,20,agave,S+H,P,NA
+5,3,4,Lehmann lovegarss,S+H,NA,15
+5,3,8,Lehmann lovegarss,S+H,NA,6
+5,3,12,Lehmann lovegarss,S+H,NA,17
+5,3,16,Lehmann lovegarss,S+H,NA,29
+5,3,20,Lehmann lovegarss,S+H,NA,25
+5,4,4,agave,W,P,NA
+5,4,8,agave,W,P,NA
+5,4,12,agave,W,P,NA
+5,4,16,agave,W,P,NA
+5,4,20,agave,W,P,NA
+5,4,4,Lehmann lovegarss,W,NA,8
+5,4,8,Lehmann lovegarss,W,NA,7
+5,4,12,Lehmann lovegarss,W,NA,1
+5,4,16,Lehmann lovegarss,W,NA,8
+5,4,20,Lehmann lovegarss,W,NA,11
+5,5,4,agave,W+S,P,NA
+5,5,8,agave,W+S,P,NA
+5,5,12,agave,W+S,P,NA
+5,5,16,agave,W+S,P,NA
+5,5,20,agave,W+S,P,NA
+5,5,4,Lehmann lovegarss,W+S,NA,10
+5,5,8,Lehmann lovegarss,W+S,NA,3
+5,5,12,Lehmann lovegarss,W+S,NA,0
+5,5,16,Lehmann lovegarss,W+S,NA,5
+5,5,20,Lehmann lovegarss,W+S,NA,3
+5,6,4,agave,J,9,NA
+5,6,8,agave,J,2,NA
+5,6,12,agave,J,5,NA
+5,6,16,agave,J,P,NA
+5,6,20,agave,J,P,NA
+5,6,4,Lehmann lovegarss,J,NA,28
+5,6,8,Lehmann lovegarss,J,NA,17
+5,6,12,Lehmann lovegarss,J,NA,3
+5,6,16,Lehmann lovegarss,J,NA,13
+5,6,20,Lehmann lovegarss,J,NA,10
+5,7,4,agave,S+H,P,NA
+5,7,8,agave,S+H,3,NA
+5,7,12,agave,S+H,P,NA
+5,7,16,agave,S+H,P,NA
+5,7,20,agave,S+H,P,NA
+5,7,4,Lehmann lovegarss,S+H,NA,13
+5,7,8,Lehmann lovegarss,S+H,NA,6
+5,7,12,Lehmann lovegarss,S+H,NA,4
+5,7,16,Lehmann lovegarss,S+H,NA,4
+5,7,20,Lehmann lovegarss,S+H,NA,3
+5,8,4,agave,W+J,3,NA
+5,8,8,agave,W+J,8,NA
+5,8,12,agave,W+J,10,NA
+5,8,16,agave,W+J,5,NA
+5,8,20,agave,W+J,P,NA
+5,8,4,Lehmann lovegarss,W+J,NA,8
+5,8,8,Lehmann lovegarss,W+J,NA,6
+5,8,12,Lehmann lovegarss,W+J,NA,2
+5,8,16,Lehmann lovegarss,W+J,NA,4
+5,8,20,Lehmann lovegarss,W+J,NA,4
+5,9,4,agave,H,4,NA
+5,9,8,agave,H,P,NA
+5,9,12,agave,H,P,NA
+5,9,16,agave,H,P,NA
+5,9,20,agave,H,P,NA
+5,9,4,Lehmann lovegarss,H,NA,4
+5,9,8,Lehmann lovegarss,H,NA,11
+5,9,12,Lehmann lovegarss,H,NA,7
+5,9,16,Lehmann lovegarss,H,NA,11
+5,9,20,Lehmann lovegarss,H,NA,11
+5,10,4,agave,J+S,P,NA
+5,10,8,agave,J+S,3,NA
+5,10,12,agave,J+S,7,NA
+5,10,16,agave,J+S,8,NA
+5,10,20,agave,J+S,3,NA
+5,10,4,Lehmann lovegarss,J+S,NA,30
+5,10,8,Lehmann lovegarss,J+S,NA,28
+5,10,12,Lehmann lovegarss,J+S,NA,22
+5,10,16,Lehmann lovegarss,J+S,NA,20
+5,10,20,Lehmann lovegarss,J+S,NA,18
