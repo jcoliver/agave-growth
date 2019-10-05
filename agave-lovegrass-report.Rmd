@@ -13,7 +13,27 @@ suppressPackageStartupMessages(library(lme4))
 A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_).
 
 ```{r data-import}
-coronado_data <- read.csv(file = "data/coronado-data-clean.csv")
+coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
+                          stringsAsFactors = FALSE)
+# NOTE: missing values in plot 2, row 1 for live_leaf_cover of Lehmann lovegrass
+# rows; changed to NA in coronado-data-clean
+
+# NOTE: in the data processing, discovered that plot 1, row 3, plant 20 Lehmann
+# lovegrass was incorrectly labeled as J+H treatment; changed to W in 
+# coronado-data-clean
+
+# NOTE: one observation (plot 1, row 1, plant 8) had a value of "L" in the 
+# live_leaf_number column; changed to NA in coronado-data-clean
+
+# NOTE: in live_leaf_number, some cells were coded "L8" and such; leading "L"
+# was removed in coronado-data-clean
+
+# NOTE: column name "areial_cover(%" changed to "areial_cover" in 
+# coronado-data-clean
+
+# NOTE: plot 4, row 1, plant 12 and plot 4, row 2, plant 12 had D/10 and D/D 6,
+# respectively in areial_cover column. Changed to 10 and 6, respectively, in 
+# coronado-data-clean
 
 # Treatments are sometimes referred to in different ways, i.e. J+S and S+J are 
 # both present in data set, but mean the same thing.
@@ -21,21 +41,54 @@ coronado_data$Treatment[coronado_data$Treatment == "S+J"] <- "J+S"
 coronado_data$Treatment[coronado_data$Treatment == "H+J"] <- "J+H" # may not occur
 coronado_data$Treatment[coronado_data$Treatment == "W+J"] <- "J+W"
 coronado_data$Treatment[coronado_data$Treatment == "W+S"] <- "S+W"
-coronado_data$Treatment <- factor(as.character(coronado_data$Treatment))
+# coronado_data$Treatment <- factor(as.character(coronado_data$Treatment))
 
 # The reference treatment should be control, C.
 
-# NOTE: in the data processing, discovered that plot 1, row 3, plant 20 Lehmann
-# lovegrass was incorrectly labeled as J+H treatment; changed to W in 
-# coronado-data-clean
+# Treatments will need to be put in separate columns
+# Javalina protection
+# J and J+S and J+W and J+H
+coronado_data$Javalina <- 0
+coronado_data$Javalina[coronado_data$Treatment %in% c("J", "J+S", "J+W", "J+H")] <- 1
+coronado_data$Javalina <- factor(coronado_data$Javalina)
 
-# NOTE: missing values in plot 2, row 1 for live_leaf_cover of Lehmann lovegrass
-# rows; changed to NA in coronado-data-clean
+# Shade cloth
+# S and J+S and S+H and S+W
+coronado_data$Shade <- 0
+coronado_data$Shade[coronado_data$Treatment %in% c("S", "J+S", "S+H", "S+W")] <- 1
+coronado_data$Shade <- factor(coronado_data$Shade)
+
+# Weed eating
+# W and J+W and W+H
+coronado_data$Weed_eating <- 0
+coronado_data$Weed_eating[coronado_data$Treatment %in% c("W", "J+W", "W+H")] <- 1
+coronado_data$Weed_eating <- factor(coronado_data$Weed_eating)
+
+# Hand pulling
+# H and J+H and S+H
+coronado_data$Hand_pulling <- 0
+coronado_data$Hand_pulling[coronado_data$Treatment %in% c("H", "J+H", "S+H")] <- 1
+coronado_data$Hand_pulling <- factor(coronado_data$Hand_pulling)
 
 # Add "Status" column to indicate live or dead for agaves
 coronado_data$Status <- NA
 coronado_data$Status[coronado_data$Species == "agave"] <- 1
-coronado_data$Status[coronado_data$live_leaf_number %in% c("D", "D/P")] <- 0
+coronado_data$Status[coronado_data$live_leaf_number %in% c("D", "D/P", "P")] <- 0
+
+# 
+
+# Only need agave data for analyses
+agave_data <- coronado_data[coronado_data$Species == "agave", ]
+
+# Drop areial_cover.. column (will come from lovegrass rows)
+to_drop <- which(colnames(agave_data) == "areial_cover")
+agave_data <- agave_data[, -to_drop]
+
+# But still need lehmann lovegarss [sic] cover for some analyses, so a merge
+# is required
+lehman_data <- coronado_data[coronado_data$Species == "Lehmann lovegarss", ]
+lehman_data <- lehman_data[, c("plot", "Row", "plant.num", "areial_cover")]
+agave_data <- merge(x = agave_data, y = lehman_data)
 ```
 
 ## 1. How does treatment affect agave survival?
@@ -64,20 +117,17 @@ Where $b_0$ is the random intercept for plot. Data will take the structure:
 This will be logistic regression, where plant status is a binary response variable.
 
 ```{r survival-treatment}
-# Only need agave data for this analysis
-agave_data <- coronado_data[coronado_data$Species == "agave", ]
+# Treating "Treatment" as a single variable
+survival_model <- glmer(formula = Status ~ Treatment + (1|plot),
+                        data = agave_data,
+                        family = binomial(link = "logit"))
+summary(survival_model)
 
-# An attempt at a GLMM, to affort plot randome effects (does not seem to work)
-# survival_model <- glmer(formula = Status ~ Treatment + (1|plot), 
-#                         data = agave_data, 
-#                         family = binomial(link = "logit"))
-
-# Ignoring plot effects (which may kinda be necessary)
-survival_model <- glm(formula = Status ~ Treatment,
-                      data = agave_data,
-                      family = binomial(link = "logit"))
+# A different approach, where treatments are four different variables
+# survival_model <- glmer(formula = Status ~ Javalina + Shade + Weed_eating + Hand_pulling + (1|plot),
+#                       data = agave_data,
+#                       family = binomial(link = "logit"))
 # summary(survival_model)
-
 ```
 
 ### 1.2. How does treatment affect agave size?
@@ -96,7 +146,22 @@ Where $b_0$ is the random intercept for plot. Data will take the structure:
 | 1    | J+H       | 6                 |
 | ...  | ...       | ...               |
 
+```{r size-treatment}
+# Start by dropping all dead plants
+live_agave_data <- agave_data[agave_data$Status == 1, ]
+
+# Now all values in live_leaf_number should be numeric
+live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
+
+# Run model with plot as a random effect
+size_model <- lmerTest::lmer(formula = live_leaf_number ~ Treatment + (1|plot),
+                    data = live_agave_data)
+summary(size_model)
+```
+
 _Note_: There are several Plot by Treatment combinations with zero measurement for leaf count. This could potentially undermine this particular analysis.
+
+
 
 ## 2. How do the W and H treatments and agave size affect the percent of Lehmann cover?
 
@@ -131,6 +196,21 @@ Where $b_0$ is the random intercept for plot. Data will take the structure:
 | 1    | S+W       | Live              | 5       |
 | 1    | H         | Dead              | 4       |
 | ...  | ...       | ...               | ...     |
+
+```{r survival-treatment-cover}
+# Treating "Treatment" as a single variable
+# Will most likely fail to converge
+survival_model <- glmer(formula = Status ~ Treatment + areial_cover + (1|plot),
+                        data = agave_data,
+                        family = binomial(link = "logit"))
+# Retrieve model estimates
+ss <- getME(survival_model, name = c("theta", "fixef"))
+
+# Re-run model, starting with parameter estimates from first try
+survival_model <- update(survival_model, start = ss)
+summary(survival_model)
+```
+
 
 ### 3.2 How does percent cover affect agave size?
 

@@ -1,6 +1,6 @@
-plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
+plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover
 1,1,4,agave,S+W,P,NA
-1,1,8,agave,S+W,L,NA
+1,1,8,agave,S+W,NA,NA
 1,1,12,agave,S+W,P,NA
 1,1,16,agave,S+W,P,NA
 1,1,20,agave,S+W,P,NA
@@ -306,17 +306,17 @@ plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
 4,1,20,agave,S+W,P,NA
 4,1,4,Lehmann lovegarss,S+W,NA,10
 4,1,8,Lehmann lovegarss,S+W,NA,11
-4,1,12,Lehmann lovegarss,S+W,NA,D/10
+4,1,12,Lehmann lovegarss,S+W,NA,10
 4,1,16,Lehmann lovegarss,S+W,NA,11
 4,1,20,Lehmann lovegarss,S+W,NA,15
-4,2,4,agave,J+H,L8,NA
+4,2,4,agave,J+H,8,NA
 4,2,8,agave,J+H,P,NA
 4,2,12,agave,J+H,D,NA
 4,2,16,agave,J+H,P,NA
 4,2,20,agave,J+H,P,NA
 4,2,4,Lehmann lovegarss,J+H,NA,10
 4,2,8,Lehmann lovegarss,J+H,NA,3
-4,2,12,Lehmann lovegarss,J+H,NA,D/D 6
+4,2,12,Lehmann lovegarss,J+H,NA,6
 4,2,16,Lehmann lovegarss,J+H,NA,3
 4,2,20,Lehmann lovegarss,J+H,NA,3
 4,3,4,agave,S+H,5,NA
@@ -329,10 +329,10 @@ plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
 4,3,12,Lehmann lovegarss,S+H,NA,4
 4,3,16,Lehmann lovegarss,S+H,NA,5
 4,3,20,Lehmann lovegarss,S+H,NA,5
-4,4,4,agave,S,L3,NA
-4,4,8,agave,S,L3,NA
-4,4,12,agave,S,L9,NA
-4,4,16,agave,S,L9,NA
+4,4,4,agave,S,3,NA
+4,4,8,agave,S,3,NA
+4,4,12,agave,S,9,NA
+4,4,16,agave,S,9,NA
 4,4,20,agave,S,P,NA
 4,4,4,Lehmann lovegarss,S,NA,38
 4,4,8,Lehmann lovegarss,S,NA,35
@@ -340,19 +340,19 @@ plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
 4,4,16,Lehmann lovegarss,S,NA,30
 4,4,20,Lehmann lovegarss,S,NA,45
 4,5,4,agave,C,P,NA
-4,5,8,agave,C,L3,NA
-4,5,12,agave,C,"Shaded under tree, L6",NA
+4,5,8,agave,C,3,NA
+4,5,12,agave,C,6,NA
 4,5,16,agave,C,P,NA
-4,5,20,agave,C,L4,NA
+4,5,20,agave,C,4,NA
 4,5,4,Lehmann lovegarss,C,NA,52
 4,5,8,Lehmann lovegarss,C,NA,33
 4,5,12,Lehmann lovegarss,C,NA,0
 4,5,16,Lehmann lovegarss,C,NA,20
 4,5,20,Lehmann lovegarss,C,NA,36
-4,6,4,agave,J+S,L9,NA
-4,6,8,agave,J+S,L8,NA
+4,6,4,agave,J+S,9,NA
+4,6,8,agave,J+S,8,NA
 4,6,12,agave,J+S,P,NA
-4,6,16,agave,J+S,L15,NA
+4,6,16,agave,J+S,15,NA
 4,6,20,agave,J+S,13,NA
 4,6,4,Lehmann lovegarss,J+S,NA,33
 4,6,8,Lehmann lovegarss,J+S,NA,22
@@ -361,19 +361,19 @@ plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
 4,6,20,Lehmann lovegarss,J+S,NA,15
 4,7,4,agave,H,P,NA
 4,7,8,agave,H,P,NA
-4,7,12,agave,H,L4,NA
-4,7,16,agave,H,L8,NA
+4,7,12,agave,H,4,NA
+4,7,16,agave,H,8,NA
 4,7,20,agave,H,P,NA
 4,7,4,Lehmann lovegarss,H,NA,8
 4,7,8,Lehmann lovegarss,H,NA,3
 4,7,12,Lehmann lovegarss,H,NA,2
 4,7,16,Lehmann lovegarss,H,NA,3
 4,7,20,Lehmann lovegarss,H,NA,7
-4,8,4,agave,W+J,L6,NA
-4,8,8,agave,W+J,L7,NA
-4,8,12,agave,W+J,L10,NA
-4,8,16,agave,W+J,L4,NA
-4,8,20,agave,W+J,L10,NA
+4,8,4,agave,W+J,6,NA
+4,8,8,agave,W+J,7,NA
+4,8,12,agave,W+J,10,NA
+4,8,16,agave,W+J,4,NA
+4,8,20,agave,W+J,10,NA
 4,8,4,Lehmann lovegarss,W+J,NA,10
 4,8,8,Lehmann lovegarss,W+J,NA,15
 4,8,12,Lehmann lovegarss,W+J,NA,10
@@ -382,7 +382,7 @@ plot,Row,plant num,Species,Treatment,live_leaf_number,areial_cover(%
 4,9,4,agave,W,P,NA
 4,9,8,agave,W,P,NA
 4,9,12,agave,W,P,NA
-4,9,16,agave,W,L8,NA
+4,9,16,agave,W,8,NA
 4,9,20,agave,W,P,NA
 4,9,4,Lehmann lovegarss,W,NA,13
 4,9,8,Lehmann lovegarss,W,NA,2
