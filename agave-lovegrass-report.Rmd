@@ -1,16 +1,19 @@
 ---
 title: "Agaves & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "10/2/2019"
+date: "October 8, 2019"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 suppressPackageStartupMessages(library(lme4))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(lmerTest))
 ```
 
-A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_).
+# Summary
+A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
 
 ```{r data-import}
 coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
@@ -75,8 +78,6 @@ coronado_data$Status <- NA
 coronado_data$Status[coronado_data$Species == "agave"] <- 1
 coronado_data$Status[coronado_data$live_leaf_number %in% c("D", "D/P", "P")] <- 0
 
-# 
-
 # Only need agave data for analyses
 agave_data <- coronado_data[coronado_data$Species == "agave", ]
 
@@ -91,62 +92,131 @@ lehman_data <- lehman_data[, c("plot", "Row", "plant.num", "areial_cover")]
 agave_data <- merge(x = agave_data, y = lehman_data)
 ```
 
-## 1. How does treatment affect agave survival?
+## 1. How does treatment affect agave survival and size?
 
-"Survival" is measured two ways: 
+The two response variables are:
 
-1. The total number of live plants in a row (all those not marked as "D(ead)")
+1. The total number of live plants in a row (all those not marked as dead or predated)
 2. The number of leaves on agave plants; the number of agaves measured varies among plot/treatment combinations
 
-There are nine total treatments, including control.
+The inclusion of treatment in the models can be done in two different ways:
+
+1. Treatment is treated as a single predictor variable, with `r length(levels(agave_data$Treatment))` levels, including the control.
+2. Treatment is separated into multiple binary predictor variables; indicating whether or not a specific treatment (i.e. Javalina protection) was applied.
 
 ### 1.1 How does treatment affect agave survival _s.s._?
+
+In this model, survival is treated as a binary response variable and a logistic regression model is applied.
+
+#### 1.1.a Treatment as a single predictor
+
+For the method of predicting based on treatment, there is a single fixed-effect in the model:
 
 $$
 Survival = \beta_0 + \beta_1 \times Treatment + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. Data will take the structure:
+Where $b_0$ is the random intercept for plot.
 
-| Plot | Treatment | Plant status      |
-|:-----|:---------:|:-----------------:|
-| 1    | S+W       | Live              |
-| 1    | H         | Dead              |
-| ...  | ...       | ...               |
-
-This will be logistic regression, where plant status is a binary response variable.
-
-```{r survival-treatment}
+```{r survival-single-treatment, warning = FALSE}
 # Treating "Treatment" as a single variable
-survival_model <- glmer(formula = Status ~ Treatment + (1|plot),
-                        data = agave_data,
-                        family = binomial(link = "logit"))
-summary(survival_model)
+surv_single <- glmer(formula = Status ~ Treatment + (1|plot),
+                     data = agave_data,
+                     family = binomial(link = "logit"))
+surv_single_summary <- summary(surv_single)
 
-# A different approach, where treatments are four different variables
-# survival_model <- glmer(formula = Status ~ Javalina + Shade + Weed_eating + Hand_pulling + (1|plot),
-#                       data = agave_data,
-#                       family = binomial(link = "logit"))
-# summary(survival_model)
+# Pull out the coefficients
+surv_single_coeffs <- surv_single_summary$coefficients
+
+# Tidy up coefficients
+surv_single_coeffs <- tidy(surv_single_coeffs)
+
+# Update column names
+colnames(surv_single_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
+
+# Remove "Treatment"
+surv_single_coeffs$Predictor <- gsub(pattern = "Treatment",
+                                     replacement = "",
+                                     x = surv_single_coeffs$Predictor)
+
+knitr::kable(x = surv_single_coeffs[, c(1, 2, 3, 5)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(surv_single_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
+
+#### 1.1.b Treatment as multiple predictors
+
+The alternative approach is to treat each type of treatment as a separate variable:
+
+$$
+Survival = \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \\
+\beta_4 \times Hand \enspace pulling + b_0
+$$
+
+Where $b_0$ is the random intercept for plot. This simple model does _not_ incorporate interaction effects, although a richer model could include those. For example, the interaction between Javalina protection and Shade is significant (results not shown) and may explain the difference between Javalina protection alone and Javalina protection plus shade in 1.1.a, above.
+
+```{r survival-multiple-treatment, warning = FALSE}
+surv_multi <- glmer(formula = Status ~ Javalina + Shade + Weed_eating + Hand_pulling + (1|plot),
+                    data = agave_data,
+                    family = binomial(link = "logit"))
+surv_multi_summary <- summary(surv_multi)
+
+# Pull out the coefficients
+surv_multi_coeffs <- surv_multi_summary$coefficients
+
+# Tidy up coefficients
+surv_multi_coeffs <- tidy(surv_multi_coeffs)
+
+# Update column names
+colnames(surv_multi_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
+
+# Remove the trailing "1" from predictors
+surv_multi_coeffs$Predictor <- gsub(pattern = "1",
+                                    replacement = "",
+                                    x = surv_multi_coeffs$Predictor)
+
+# Replace underscores with spaces
+surv_multi_coeffs$Predictor <- gsub(pattern = "_",
+                                    replacement = " ",
+                                    x = surv_multi_coeffs$Predictor)
+
+
+knitr::kable(x = surv_multi_coeffs[, c(1, 2, 3, 5)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(surv_multi_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
 ```
 
 ### 1.2. How does treatment affect agave size?
+
+In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models.
+
+#### 1.2.a Treatment as a single predictor
+
+The first model considers Treatment as a single predictor variable.
 
 $$
 \# Leaves = \beta_0 + \beta_1 \times Treatment + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. Data will take the structure:
+Where $b_0$ is the random intercept for plot.
 
-| Plot | Treatment | Number of leaves  |
-|:-----|:---------:|:-----------------:|
-| 1    | H         | 10                |
-| 1    | H         | 7                 |
-| ...  | ...       | ...               |
-| 1    | J+H       | 6                 |
-| ...  | ...       | ...               |
-
-```{r size-treatment}
+```{r size-single-treatment, warning = FALSE}
 # Start by dropping all dead plants
 live_agave_data <- agave_data[agave_data$Status == 1, ]
 
@@ -154,63 +224,216 @@ live_agave_data <- agave_data[agave_data$Status == 1, ]
 live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
 
 # Run model with plot as a random effect
-size_model <- lmerTest::lmer(formula = live_leaf_number ~ Treatment + (1|plot),
+size_single_model <- lmerTest::lmer(formula = live_leaf_number ~ Treatment + (1|plot),
                     data = live_agave_data)
-summary(size_model)
+size_single_summary <- summary(size_single_model)
+
+# Pull out the coefficients
+size_single_coeffs <- size_single_summary$coefficients
+
+# Coerce to a data frame
+size_single_coeffs <- as.data.frame(size_single_coeffs)
+
+# Add rownames as first column
+size_single_coeffs <- cbind(Predictor = rownames(size_single_coeffs), 
+                            size_single_coeffs)
+rownames(size_single_coeffs) <- NULL
+
+# Update column names
+colnames(size_single_coeffs) <- c("Predictor", "Estimate", "Std.Error", "df", "z.value", "p.value")
+
+# Remove "Treatment"
+size_single_coeffs$Predictor <- gsub(pattern = "Treatment",
+                                     replacement = "",
+                                     x = size_single_coeffs$Predictor)
+
+knitr::kable(x = size_single_coeffs[, c(1, 2, 3, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
 
-_Note_: There are several Plot by Treatment combinations with zero measurement for leaf count. This could potentially undermine this particular analysis.
+```{r results = "asis"}
+if (any(size_single_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
 
+_Note_: There are several Plot by Treatment combinations with zero measurements for leaf count. This could potentially influence this particular analysis.
 
+#### 1.2.b Treatment as multiple predictors
+
+The second model separates out the four treatment types into separate variables:
+
+$$
+\# Leaves = \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \\
+\beta_4 \times Hand \enspace pulling + b_0
+$$
+
+Where $b_0$ is the random intercept for plot.
+
+```{r size-multi-treatment, warning = FALSE}
+# Run model with plot as a random effect
+size_multi_model <- lmerTest::lmer(formula = live_leaf_number ~ Javalina + Shade + Weed_eating + Hand_pulling + (1|plot),
+                    data = live_agave_data)
+size_multi_summary <- summary(size_multi_model)
+
+# Pull out the coefficients
+size_multi_coeffs <- size_multi_summary$coefficients
+
+# Coerce to a data frame
+size_multi_coeffs <- as.data.frame(size_multi_coeffs)
+
+# Add rownames as first column
+size_multi_coeffs <- cbind(Predictor = rownames(size_multi_coeffs), 
+                            size_multi_coeffs)
+rownames(size_multi_coeffs) <- NULL
+
+# Update column names
+colnames(size_multi_coeffs) <- c("Predictor", "Estimate", "Std.Error", "df", "z.value", "p.value")
+
+# Remove trailing "1" from Predictor column
+size_multi_coeffs$Predictor <- gsub(pattern = "1",
+                                     replacement = "",
+                                     x = size_multi_coeffs$Predictor)
+
+# Replace underscores in predictor names
+size_multi_coeffs$Predictor <- gsub(pattern = "_",
+                                     replacement = " ",
+                                     x = size_multi_coeffs$Predictor)
+
+knitr::kable(x = size_multi_coeffs[, c(1, 2, 3, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(size_multi_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
 
 ## 2. How do the W and H treatments and agave size affect the percent of Lehmann cover?
+
+Here we are interested to know how certain treatments and the size of the agave plants affect the % cover of Lehman lovegrass. Ideally we would use a mixed-effect model with linear regression:
 
 $$
 \% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. Data will take the structure:
+```{r cover-data-prep, warning = FALSE}
+# Need to reduce data to only treatments H and W
+cover_data <- live_agave_data[live_agave_data$Treatment %in% c("C", "H", "W"), ]
+cover_data$Treatment <- factor(x = cover_data$Treatment)
+```
 
-| Plot | Treatment | Number of leaves  | % Cover | 
-|:-----|:---------:|:-----------------:|:-------:|
-| 1    | H         | 10                | 5       |
-| 1    | H         | 7                 | 12      |
-| ...  | ...       | ...               | ...     |
+Where $b_0$ is the random intercept for plot. However, when considering _only_ the samples from H and W (and control) treatments, there are too few samples (N = `r sum(!is.na(cover_data$live_leaf_number))`) to run a mixed effect model. A good old fashioned linear regression model is then:
 
-For this question, _only_ the samples from H and W treatments will be considered. Those samples from treatments that are a combination of H/W and other treatments (e.g. S+W) are _not_ included. Similar to question 1.2, there are several H/W treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
+$$
+\% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves
+$$
+
+```{r cover-analysis, warning = FALSE}
+# Only 21 rows of data when H, W, and C are included. Too few for mixed-effects
+
+# Run linear model with plot as random effect
+# cover_model <- lmerTest::lmer(formula = areial_cover ~ Treatment + live_leaf_number + (1|plot),
+#                               data = cover_data)
+
+cover_model <- lm(formula = areial_cover ~ Treatment + live_leaf_number, data = cover_data)
+cover_summary <- summary(cover_model)
+
+cover_coeffs <- cover_summary$coefficients
+
+# Coerce to a data frame
+cover_coeffs <- as.data.frame(cover_coeffs)
+
+# Add rownames as first column
+cover_coeffs <- cbind(Predictor = rownames(cover_coeffs),
+                      cover_coeffs)
+rownames(cover_coeffs) <- NULL
+
+# Remove "Treatment"
+cover_coeffs$Predictor <- gsub(pattern = "Treatment",
+                               replacement = "",
+                               x = cover_coeffs$Predictor)
+
+# Replace live_leave_number with human-readable version
+cover_coeffs$Predictor <- gsub(pattern = "live_leaf_number",
+                               replacement = "Size (No. leaves)",
+                               x = cover_coeffs$Predictor)
+
+knitr::kable(x = cover_coeffs[, c(1, 2, 3, 5)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(cover_coeffs$`Pr(>|t|)` < 1e-5)) {
+  print("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
+
+_Note_: Similar to question 1.2, there are several H/W treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
 
 ## 3. How does percent cover affect survival and size of agaves?
 
 ### 3.1 How does percent cover affect agave survival?
 
-Where survival is the total number of agaves alive. This is probably best addressed with an expanded version of the model presented in 1.1, above.
+Where survival is the total number of agaves alive. This is probably best addressed with an expanded version of the model presented in 1.1.a, above.
 
 $$
 Survival = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. Data will take the structure:
+Where $b_0$ is the random intercept for plot.
 
-| Plot | Treatment | Plant status      | % Cover |
-|:-----|:---------:|:-----------------:|:-------:|
-| 1    | S+W       | Live              | 5       |
-| 1    | H         | Dead              | 4       |
-| ...  | ...       | ...               | ...     |
-
-```{r survival-treatment-cover}
+```{r survival-treatment-cover, warning = FALSE}
 # Treating "Treatment" as a single variable
 # Will most likely fail to converge
-survival_model <- glmer(formula = Status ~ Treatment + areial_cover + (1|plot),
-                        data = agave_data,
-                        family = binomial(link = "logit"))
-# Retrieve model estimates
-ss <- getME(survival_model, name = c("theta", "fixef"))
+surv_single_cover_model <- glmer(formula = Status ~ Treatment + areial_cover + (1|plot),
+                                 data = agave_data,
+                                 family = binomial(link = "logit"))
+# Retrieve model estimates, for second run
+ss <- getME(surv_single_cover_model, name = c("theta", "fixef"))
 
 # Re-run model, starting with parameter estimates from first try
-survival_model <- update(survival_model, start = ss)
-summary(survival_model)
+surv_single_cover_model <- update(surv_single_cover_model, start = ss)
+surv_single_cover_summary <- summary(surv_single_cover_model)
+
+surv_single_cover_coeffs <- surv_single_cover_summary$coefficients
+surv_single_cover_coeffs <- tidy(surv_single_cover_coeffs)
+
+# Clean up column names
+colnames(surv_single_cover_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
+
+# Remove "Treatment"
+surv_single_cover_coeffs$Predictor <- gsub(pattern = "Treatment",
+                                           replacement = "",
+                                           x = surv_single_cover_coeffs$Predictor)
+
+# Make areial_cover more human readable
+surv_single_cover_coeffs$Predictor <- gsub(pattern = "areial_cover",
+                                           replacement = "% Cover Lehman lovegrass",
+                                           x = surv_single_cover_coeffs$Predictor)
+
+knitr::kable(x = surv_single_cover_coeffs[, c(1, 2, 3, 5)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
 
+```{r results = "asis"}
+if (any(surv_single_cover_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
 
 ### 3.2 How does percent cover affect agave size?
 
@@ -218,4 +441,47 @@ $$
 \# Leaves = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. This is not likely feasible, given missing data concerns as addressed above.
+Where $b_0$ is the random intercept for plot. This is a modification of the model presented in 1.2.a, above.
+
+```{r size-treatment-cover, warning = FALSE}
+# Run model with plot as a random effect
+size_single_cover_model <- lmerTest::lmer(formula = live_leaf_number ~ Treatment + areial_cover + (1|plot),
+                    data = live_agave_data)
+size_single_cover_summary <- summary(size_single_cover_model)
+
+# Pull out the coefficients
+size_single_cover_coeffs <- size_single_cover_summary$coefficients
+
+# Coerce to a data frame
+size_single_cover_coeffs <- as.data.frame(size_single_cover_coeffs)
+
+# Add rownames as first column
+size_single_cover_coeffs <- cbind(Predictor = rownames(size_single_cover_coeffs), 
+                            size_single_cover_coeffs)
+rownames(size_single_cover_coeffs) <- NULL
+
+# Update column names
+colnames(size_single_cover_coeffs) <- c("Predictor", "Estimate", "Std.Error", "df", "z.value", "p.value")
+
+# Remove "Treatment"
+size_single_cover_coeffs$Predictor <- gsub(pattern = "Treatment",
+                                     replacement = "",
+                                     x = size_single_cover_coeffs$Predictor)
+
+# Make areial_cover more human readable
+size_single_cover_coeffs$Predictor <- gsub(pattern = "areial_cover",
+                                           replacement = "% Cover Lehman lovegrass",
+                                           x = size_single_cover_coeffs$Predictor)
+
+knitr::kable(x = size_single_cover_coeffs[, c(1, 2, 3, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(size_single_cover_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
