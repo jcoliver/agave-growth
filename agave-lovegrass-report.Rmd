@@ -1,7 +1,7 @@
 ---
 title: "Agaves & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "October 8, 2019"
+date: "October 14, 2019"
 output: pdf_document
 ---
 
@@ -64,7 +64,7 @@ coronado_data$Shade <- factor(coronado_data$Shade)
 # Weed eating
 # W and J+W and W+H
 coronado_data$Weed_eating <- 0
-coronado_data$Weed_eating[coronado_data$Treatment %in% c("W", "J+W", "W+H")] <- 1
+coronado_data$Weed_eating[coronado_data$Treatment %in% c("W", "J+W", "W+H", "S+W")] <- 1
 coronado_data$Weed_eating <- factor(coronado_data$Weed_eating)
 
 # Hand pulling
@@ -188,7 +188,6 @@ surv_multi_coeffs$Predictor <- gsub(pattern = "_",
                                     replacement = " ",
                                     x = surv_multi_coeffs$Predictor)
 
-
 knitr::kable(x = surv_multi_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
@@ -201,6 +200,65 @@ if (any(surv_multi_coeffs$p.value < 1e-5)) {
   cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
 }
 ```
+
+#### 1.1.c Treatment as multiple predictors with interaction effects
+
+If this model is expanded to include interaction effects:
+
+$\begin{aligned}
+Survival &= \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \beta_4 \times Hand \enspace pulling \\
+         &+ \beta_5 \times Javalina \times Shade + \beta_6 Javalina \times Weed \enspace eating + \beta_7 \times Javalina \times Hand \enspace pulling \\
+         &+ \beta_8 \times Shade \times Weed \enspace eating + \beta_9 \times Shade \times Hand \enspace pulling + b_0
+\end{aligned}$
+
+
+
+```{r survival-multiple-interactions, warning = FALSE}
+# Including interaction effects, but not S+W
+surv_interact <- glmer(formula = Status ~ Javalina + Shade + Weed_eating + Hand_pulling + 
+                      Javalina * Shade + Javalina * Weed_eating + Javalina * Hand_pulling +
+                      Shade * Weed_eating + Shade * Hand_pulling + (1|plot),
+                    data = agave_data,
+                    family = binomial(link = "logit"))
+surv_interact_summary <- summary(surv_interact)
+
+# Pull out the coefficients
+surv_interact_coeffs <- surv_interact_summary$coefficients
+
+# Tidy up coefficients
+surv_interact_coeffs <- tidy(surv_interact_coeffs)
+
+# Update column names
+colnames(surv_interact_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
+
+# Remove the trailing "1" from predictors
+surv_interact_coeffs$Predictor <- gsub(pattern = "1",
+                                    replacement = "",
+                                    x = surv_interact_coeffs$Predictor)
+
+# Replace underscores with spaces
+surv_interact_coeffs$Predictor <- gsub(pattern = "_",
+                                    replacement = " ",
+                                    x = surv_interact_coeffs$Predictor)
+
+# Replace colon with times sign
+surv_interact_coeffs$Predictor <- gsub(pattern = ":",
+                                    replacement = " x ",
+                                    x = surv_interact_coeffs$Predictor)
+
+knitr::kable(x = surv_interact_coeffs[, c(1, 2, 3, 5)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(surv_interact_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
+
 
 ### 1.2. How does treatment affect agave size?
 
@@ -315,6 +373,68 @@ if (any(size_multi_coeffs$p.value < 1e-5)) {
   cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
 }
 ```
+
+#### 1.2.c Treatment as multiple predictors with interaction effects
+
+A model with interaction effects is:
+
+$\begin{aligned}
+\# Leaves &= \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \beta_4 \times Hand \enspace pulling \\
+         &+ \beta_5 \times Javalina \times Shade + \beta_6 Javalina \times Weed \enspace eating + \beta_7 \times Javalina \times Hand \enspace pulling \\
+         &+ \beta_8 \times Shade \times Weed \enspace eating + \beta_9 \times Shade \times Hand \enspace pulling + b_0
+\end{aligned}$
+
+
+```{r size-multi-interactions, warning = FALSE}
+# Run model with plot as a random effect
+size_interact_model <- lmerTest::lmer(formula = live_leaf_number ~ Javalina + Shade + Weed_eating + Hand_pulling + 
+                                     Javalina * Shade + Javalina * Weed_eating + Javalina * Hand_pulling +
+                                     Shade * Weed_eating + Shade * Hand_pulling + (1|plot),
+                    data = live_agave_data)
+size_interact_summary <- summary(size_interact_model)
+
+# Pull out the coefficients
+size_interact_coeffs <- size_interact_summary$coefficients
+
+# Coerce to a data frame
+size_interact_coeffs <- as.data.frame(size_interact_coeffs)
+
+# Add rownames as first column
+size_interact_coeffs <- cbind(Predictor = rownames(size_interact_coeffs), 
+                            size_interact_coeffs)
+rownames(size_interact_coeffs) <- NULL
+
+# Update column names
+colnames(size_interact_coeffs) <- c("Predictor", "Estimate", "Std.Error", "df", "z.value", "p.value")
+
+# Remove trailing "1" from Predictor column
+size_interact_coeffs$Predictor <- gsub(pattern = "1",
+                                     replacement = "",
+                                     x = size_interact_coeffs$Predictor)
+
+# Replace underscores in predictor names
+size_interact_coeffs$Predictor <- gsub(pattern = "_",
+                                     replacement = " ",
+                                     x = size_interact_coeffs$Predictor)
+
+# Replace colon with times sign
+size_interact_coeffs$Predictor <- gsub(pattern = ":",
+                                     replacement = " x ",
+                                     x = size_interact_coeffs$Predictor)
+
+knitr::kable(x = size_interact_coeffs[, c(1, 2, 3, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(size_interact_coeffs$p.value < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
+
 
 ## 2. How do the W and H treatments and agave size affect the percent of Lehmann cover?
 
