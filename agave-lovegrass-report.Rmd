@@ -1,15 +1,17 @@
 ---
 title: "Agaves & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "October 14, 2019"
+date: "October 18, 2019"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+```{r setup, include = FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.height = 3)
 suppressPackageStartupMessages(library(lme4))
 suppressPackageStartupMessages(library(broom))
 suppressPackageStartupMessages(library(lmerTest))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(ggplot2))
 ```
 
 # Summary
@@ -37,6 +39,8 @@ coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
 # NOTE: plot 4, row 1, plant 12 and plot 4, row 2, plant 12 had D/10 and D/D 6,
 # respectively in areial_cover column. Changed to 10 and 6, respectively, in 
 # coronado-data-clean
+
+# NOTE: plot 5, row 1, no treatment is assigned (NA)
 
 # Treatments are sometimes referred to in different ways, i.e. J+S and S+J are 
 # both present in data set, but mean the same thing.
@@ -90,6 +94,25 @@ agave_data <- agave_data[, -to_drop]
 lehman_data <- coronado_data[coronado_data$Species == "Lehmann lovegarss", ]
 lehman_data <- lehman_data[, c("plot", "Row", "plant.num", "areial_cover")]
 agave_data <- merge(x = agave_data, y = lehman_data)
+
+# Drop any rows missing data
+agave_data <- na.omit(agave_data)
+```
+
+## 0. Data summary
+
+Following data cleaning, the total number of replicates and plants in each treatment is:
+
+```{r data-summary}
+agave_summary <- agave_data %>%
+  group_by(Treatment) %>%
+  summarize(num_reps = length(unique(paste0(plot, Row))),
+            num_plants = n())
+
+knitr::kable(x = agave_summary,
+             format = "markdown", 
+             row.names = FALSE,
+             col.names = c("Treatment", "# Replicates", "# Plants"))
 ```
 
 ## 1. How does treatment affect agave survival and size?
@@ -101,19 +124,40 @@ The two response variables are:
 
 The inclusion of treatment in the models can be done in two different ways:
 
-1. Treatment is treated as a single predictor variable, with `r length(levels(agave_data$Treatment))` levels, including the control.
+1. Treatment is treated as a single predictor variable, with `r length(unique(agave_data$Treatment))` levels, including the control.
 2. Treatment is separated into multiple binary predictor variables; indicating whether or not a specific treatment (i.e. Javalina protection) was applied.
 
 ### 1.1 How does treatment affect agave survival _s.s._?
 
-In this model, survival is treated as a binary response variable and a logistic regression model is applied.
+In this model, survival is treated as a binary response variable and a logistic regression model is applied (N = `r nrow(agave_data)`).
+
+```{r plot-survival, warning = FALSE}
+# Want a box plot with Treatment on x-axis, # live plants/plot on y
+agave_counts <- agave_data %>%
+  group_by(plot, Treatment) %>%
+  summarize(num_alive = sum(Status))
+
+# Re-level for plotting purposes
+agave_counts$Treatment <- factor(agave_counts$Treatment,
+                                 levels = c("C", "J", "J+S", "J+H", "J+W",
+                                            "S", "S+H", "S+W", "H", "W"))
+
+agave_count_plot <- ggplot(data = agave_counts, 
+                            mapping = aes(x = Treatment, y = num_alive)) +
+  geom_boxplot() +
+  xlab(label = "Treatment") +
+  ylab(label = "# Live Agaves") +
+  ggtitle(label = "Agave survival by treatment") +
+  theme_bw()
+print(agave_count_plot)
+```
 
 #### 1.1.a Treatment as a single predictor
 
 For the method of predicting based on treatment, there is a single fixed-effect in the model:
 
 $$
-Survival = \beta_0 + \beta_1 \times Treatment + b_0
+Log{-}odds \enspace Survival = \beta_0 + \beta_1 \times Treatment + b_0
 $$
 
 Where $b_0$ is the random intercept for plot.
@@ -157,8 +201,8 @@ if (any(surv_single_coeffs$p.value < 1e-5)) {
 The alternative approach is to treat each type of treatment as a separate variable:
 
 $$
-Survival = \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \\
-\beta_4 \times Hand \enspace pulling + b_0
+Log{-}odds \enspace Survival = \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \\ 
+\beta_3 \times Weed \enspace eating + \beta_4 \times Hand \enspace pulling + b_0
 $$
 
 Where $b_0$ is the random intercept for plot. This simple model does _not_ incorporate interaction effects, although a richer model could include those. For example, the interaction between Javalina protection and Shade is significant (results not shown) and may explain the difference between Javalina protection alone and Javalina protection plus shade in 1.1.a, above.
@@ -206,12 +250,11 @@ if (any(surv_multi_coeffs$p.value < 1e-5)) {
 If this model is expanded to include interaction effects:
 
 $\begin{aligned}
-Survival &= \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \beta_4 \times Hand \enspace pulling \\
-         &+ \beta_5 \times Javalina \times Shade + \beta_6 Javalina \times Weed \enspace eating + \beta_7 \times Javalina \times Hand \enspace pulling \\
-         &+ \beta_8 \times Shade \times Weed \enspace eating + \beta_9 \times Shade \times Hand \enspace pulling + b_0
+Log{-}odds \enspace Survival &= \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \beta_4 \times Hand \enspace pulling \\
+         &+ \beta_5 \times Javalina \times Shade + \beta_6 \times Javalina \times Weed \enspace eating \\
+         &+ \beta_7 \times Javalina \times Hand \enspace pulling + \beta_8 \times Shade \times Weed \enspace eating \\
+         &+ \beta_9 \times Shade \times Hand \enspace pulling + b_0
 \end{aligned}$
-
-
 
 ```{r survival-multiple-interactions, warning = FALSE}
 # Including interaction effects, but not S+W
@@ -259,10 +302,39 @@ if (any(surv_interact_coeffs$p.value < 1e-5)) {
 }
 ```
 
-
 ### 1.2. How does treatment affect agave size?
 
-In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models.
+```{r prep-live-agave-data}
+# Start by dropping all dead plants
+live_agave_data <- agave_data[agave_data$Status == 1, ]
+
+# Now all values in live_leaf_number should be numeric
+live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
+```
+
+In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models. The data are restricted to cases where there was a live agave (N = `r nrow(live_agave_data)`).
+
+```{r plot-size, warning = FALSE}
+# Want a box plot with Treatment on x-axis, # leaves on y
+agave_sizes <- agave_data %>%
+  filter(Status == 1) %>% # Drop any dead plants
+  select(Treatment, live_leaf_number) %>%
+  mutate(live_leaf_number = as.integer(live_leaf_number))
+
+# Re-level for plotting purposes
+agave_sizes$Treatment <- factor(agave_sizes$Treatment,
+                                 levels = c("C", "J", "J+S", "J+H", "J+W",
+                                            "S", "S+H", "S+W", "H", "W"))
+
+agave_size_plot <- ggplot(data = agave_sizes, 
+                            mapping = aes(x = Treatment, y = live_leaf_number)) +
+  geom_boxplot() +
+  xlab(label = "Treatment") +
+  ylab(label = "# Leaves") +
+  ggtitle(label = "Agave size by treatment") +
+  theme_bw()
+print(agave_size_plot)
+```
 
 #### 1.2.a Treatment as a single predictor
 
@@ -275,12 +347,6 @@ $$
 Where $b_0$ is the random intercept for plot.
 
 ```{r size-single-treatment, warning = FALSE}
-# Start by dropping all dead plants
-live_agave_data <- agave_data[agave_data$Status == 1, ]
-
-# Now all values in live_leaf_number should be numeric
-live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
-
 # Run model with plot as a random effect
 size_single_model <- lmerTest::lmer(formula = live_leaf_number ~ Treatment + (1|plot),
                     data = live_agave_data)
@@ -380,10 +446,10 @@ A model with interaction effects is:
 
 $\begin{aligned}
 \# Leaves &= \beta_0 + \beta_1 \times Javalina + \beta_2 \times Shade + \beta_3 \times Weed \enspace eating + \beta_4 \times Hand \enspace pulling \\
-         &+ \beta_5 \times Javalina \times Shade + \beta_6 Javalina \times Weed \enspace eating + \beta_7 \times Javalina \times Hand \enspace pulling \\
-         &+ \beta_8 \times Shade \times Weed \enspace eating + \beta_9 \times Shade \times Hand \enspace pulling + b_0
+         &+ \beta_5 \times Javalina \times Shade + \beta_6 \times Javalina \times Weed \enspace eating \\
+         &+ \beta_7 \times Javalina \times Hand \enspace pulling + \beta_8 \times Shade \times Weed \enspace eating \\
+         &+ \beta_9 \times Shade \times Hand \enspace pulling + b_0
 \end{aligned}$
-
 
 ```{r size-multi-interactions, warning = FALSE}
 # Run model with plot as a random effect
@@ -435,58 +501,83 @@ if (any(size_interact_coeffs$p.value < 1e-5)) {
 }
 ```
 
+## 2. How do the W and H treatments and agaves affect the percent of Lehmann cover?
 
-## 2. How do the W and H treatments and agave size affect the percent of Lehmann cover?
+In these analyses, the effect of agaves is modeled in two ways:
 
-Here we are interested to know how certain treatments and the size of the agave plants affect the % cover of Lehman lovegrass. Ideally we would use a mixed-effect model with linear regression:
+1. Agave size (i.e. the number of leaves)
+2. Presence or absence of a live agave
+
+### 2.1 How do selected treatments and agave size affect percent cover?
+
+```{r cover-data-live-prep, warning = FALSE}
+# Need to reduce data to only treatments H and W
+cover_data_live <- live_agave_data[live_agave_data$Treatment %in% c("C", "H", "W"), ]
+cover_data_live$Treatment <- factor(x = cover_data_live$Treatment)
+```
+
+Here we are interested to know how certain treatments and the _size_ of the agave plants affect the % cover of Lehman lovegrass (N = `r nrow(cover_data_live)`). 
+
+```{r plot-cover-size}
+plot_cover_size <- ggplot(data = cover_data_live, 
+                          mapping = aes(x = live_leaf_number, y = areial_cover,
+                                        group = Treatment, fill = Treatment)) +
+  geom_point(size = 2.0, shape = 21, alpha = 0.8) +
+  scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
+                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
+  xlab(label = "# Leaves") +
+  ylab(label = "% Cover") +
+  ggtitle(label = "% Lehmann cover by agave size") +
+  theme_bw()
+print(plot_cover_size)
+```
+
+Ideally we would use a mixed-effect model with linear regression:
 
 $$
 \% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves + b_0
 $$
 
-```{r cover-data-prep, warning = FALSE}
-# Need to reduce data to only treatments H and W
-cover_data <- live_agave_data[live_agave_data$Treatment %in% c("C", "H", "W"), ]
-cover_data$Treatment <- factor(x = cover_data$Treatment)
-```
-
-Where $b_0$ is the random intercept for plot. However, when considering _only_ the samples from H and W (and control) treatments, there are too few samples (N = `r sum(!is.na(cover_data$live_leaf_number))`) to run a mixed effect model. A good old fashioned linear regression model is then:
+Where $b_0$ is the random intercept for plot. However, when considering _only_ the samples from H and W (and control) treatments, there are too few samples (N = `r sum(!is.na(cover_data_live$live_leaf_number))`) to run a mixed effect model. A good old fashioned linear regression model is then:
 
 $$
 \% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves
 $$
 
-```{r cover-analysis, warning = FALSE}
+```{r cover-analysis-size, warning = FALSE}
 # Only 21 rows of data when H, W, and C are included. Too few for mixed-effects
 
 # Run linear model with plot as random effect
-# cover_model <- lmerTest::lmer(formula = areial_cover ~ Treatment + live_leaf_number + (1|plot),
-#                               data = cover_data)
+# cover_size_model <- lmerTest::lmer(formula = areial_cover ~ Treatment + live_leaf_number + (1|plot),
+#                               data = cover_data_live)
 
-cover_model <- lm(formula = areial_cover ~ Treatment + live_leaf_number, data = cover_data)
-cover_summary <- summary(cover_model)
+cover_size_model <- lm(formula = areial_cover ~ Treatment + live_leaf_number, data = cover_data_live)
+cover_size_summary <- summary(cover_size_model)
 
-cover_coeffs <- cover_summary$coefficients
+cover_size_coeffs <- cover_size_summary$coefficients
 
 # Coerce to a data frame
-cover_coeffs <- as.data.frame(cover_coeffs)
+cover_size_coeffs <- as.data.frame(cover_size_coeffs)
 
 # Add rownames as first column
-cover_coeffs <- cbind(Predictor = rownames(cover_coeffs),
-                      cover_coeffs)
-rownames(cover_coeffs) <- NULL
+cover_size_coeffs <- cbind(Predictor = rownames(cover_size_coeffs),
+                      cover_size_coeffs)
+rownames(cover_size_coeffs) <- NULL
 
-# Remove "Treatment"
-cover_coeffs$Predictor <- gsub(pattern = "Treatment",
-                               replacement = "",
-                               x = cover_coeffs$Predictor)
+# Replace "Treatment" values
+cover_size_coeffs$Predictor <- gsub(pattern = "TreatmentH",
+                               replacement = "Hand-pulling",
+                               x = cover_size_coeffs$Predictor)
+cover_size_coeffs$Predictor <- gsub(pattern = "TreatmentW",
+                               replacement = "Weed-eating",
+                               x = cover_size_coeffs$Predictor)
 
 # Replace live_leave_number with human-readable version
-cover_coeffs$Predictor <- gsub(pattern = "live_leaf_number",
-                               replacement = "Size (No. leaves)",
-                               x = cover_coeffs$Predictor)
+cover_size_coeffs$Predictor <- gsub(pattern = "live_leaf_number",
+                               replacement = "Agave size",
+                               x = cover_size_coeffs$Predictor)
 
-knitr::kable(x = cover_coeffs[, c(1, 2, 3, 5)], 
+knitr::kable(x = cover_size_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
@@ -494,21 +585,100 @@ knitr::kable(x = cover_coeffs[, c(1, 2, 3, 5)],
 ```
 
 ```{r results = "asis"}
-if (any(cover_coeffs$`Pr(>|t|)` < 1e-5)) {
-  print("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+if (any(cover_size_coeffs$`Pr(>|t|)` < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
 }
 ```
 
 _Note_: Similar to question 1.2, there are several H/W treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
 
+### 2.2 How do selected treatments and the presence of a live agave affect percent cover?
+
+```{r cover-data-all-prep}
+# Extract only those treatments of interest
+cover_data_all <- agave_data[agave_data$Treatment %in% c("C", "H", "W"), ]
+cover_data_all$Treatment <- factor(x = cover_data_all$Treatment)
+cover_data_all$Status <- factor(x = cover_data_all$Status)
+```
+
+In contrast to 2.1, we instead use presence or absence of a live agave in the model (N = `r nrow(cover_data_all)`). 
+
+```{r plot-cover-pa}
+cover_data_all$agave <- "Present"
+cover_data_all$agave[cover_data_all$Status == 0] <- "Absent"
+cover_data_all$agave <- factor(x = cover_data_all$agave)
+
+plot_cover_pa <- ggplot(data = cover_data_all, 
+                          mapping = aes(x = agave, y = areial_cover,
+                                        fill = Treatment)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
+                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
+  xlab(label = "Agave") +
+  ylab(label = "% Cover") +
+  ggtitle(label = "% Lehmann cover by agave presence") +
+  theme_bw()
+print(plot_cover_pa)
+```
+
+We use a mixed-effect model:
+
+$$
+\% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times Agave + b_0
+$$
+where _Agave_ is a binary predictor, indicating whether or not a live agave was present and $b_0$ is the random intercept for plot.
+
+```{r cover-analysis-pa, warning = FALSE}
+# Run linear model with plot as random effect
+cover_model_pa <- lmerTest::lmer(formula = areial_cover ~ Treatment + Status + (1|plot),
+                                 data = cover_data_all)
+cover_pa_summary <- summary(cover_model_pa)
+
+# Extract coefficients
+cover_pa_coeffs <- cover_pa_summary$coefficients
+
+# Coerce to a data frame
+cover_pa_coeffs <- as.data.frame(cover_pa_coeffs)
+
+# Add rownames as first column
+cover_pa_coeffs <- cbind(Predictor = rownames(cover_pa_coeffs),
+                      cover_pa_coeffs)
+rownames(cover_pa_coeffs) <- NULL
+
+# Replace "Treatment" values
+cover_pa_coeffs$Predictor <- gsub(pattern = "TreatmentH",
+                               replacement = "Hand-pulling",
+                               x = cover_pa_coeffs$Predictor)
+cover_pa_coeffs$Predictor <- gsub(pattern = "TreatmentW",
+                               replacement = "Weed-eating",
+                               x = cover_pa_coeffs$Predictor)
+
+# Replace Status1 with human-readable version
+cover_pa_coeffs$Predictor <- gsub(pattern = "Status1",
+                               replacement = "Agave presence",
+                               x = cover_pa_coeffs$Predictor)
+
+knitr::kable(x = cover_pa_coeffs[, c(1, 2, 3, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+```{r results = "asis"}
+if (any(cover_pa_coeffs$`Pr(>|t|)` < 1e-5)) {
+  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
+}
+```
+
 ## 3. How does percent cover affect survival and size of agaves?
 
 ### 3.1 How does percent cover affect agave survival?
 
-Where survival is the total number of agaves alive. This is probably best addressed with an expanded version of the model presented in 1.1.a, above.
+Where survival is the total number of agaves alive. This is probably best addressed with an expanded version of the model presented in 1.1.a, above (N = `r nrow(agave_data)`).
 
 $$
-Survival = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
+Log{-}odds \enspace Survival = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
 $$
 
 Where $b_0$ is the random intercept for plot.
@@ -561,7 +731,7 @@ $$
 \# Leaves = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \% Cover + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. This is a modification of the model presented in 1.2.a, above.
+Where $b_0$ is the random intercept for plot. This is a modification of the model presented in 1.2.a, above (N = `r nrow(live_agave_data)`).
 
 ```{r size-treatment-cover, warning = FALSE}
 # Run model with plot as a random effect
