@@ -40,7 +40,8 @@ coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
 # respectively in areial_cover column. Changed to 10 and 6, respectively, in 
 # coronado-data-clean
 
-# NOTE: plot 5, row 1, no treatment is assigned (NA)
+# NOTE: plot 5, row 1, no treatment was assigned (NA) in original Excel file; 
+# changed to S+W following consultation with A. Gill 2019-11-01
 
 # Treatments are sometimes referred to in different ways, i.e. J+S and S+J are 
 # both present in data set, but mean the same thing.
@@ -150,6 +151,7 @@ agave_count_plot <- ggplot(data = agave_counts,
   ggtitle(label = "Agave survival by treatment") +
   theme_bw()
 print(agave_count_plot)
+ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot)
 ```
 
 #### 1.1.a Treatment as a single predictor
@@ -334,6 +336,7 @@ agave_size_plot <- ggplot(data = agave_sizes,
   ggtitle(label = "Agave size by treatment") +
   theme_bw()
 print(agave_size_plot)
+ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot)
 ```
 
 #### 1.2.a Treatment as a single predictor
@@ -519,7 +522,7 @@ cover_data_live$Treatment <- factor(x = cover_data_live$Treatment)
 Here we are interested to know how certain treatments and the _size_ of the agave plants affect the % cover of Lehman lovegrass (N = `r nrow(cover_data_live)`). 
 
 ```{r plot-cover-size}
-plot_cover_size <- ggplot(data = cover_data_live, 
+cover_size_plot <- ggplot(data = cover_data_live, 
                           mapping = aes(x = live_leaf_number, y = areial_cover,
                                         group = Treatment, fill = Treatment)) +
   geom_point(size = 2.0, shape = 21, alpha = 0.8) +
@@ -529,7 +532,8 @@ plot_cover_size <- ggplot(data = cover_data_live,
   ylab(label = "% Cover") +
   ggtitle(label = "% Lehmann cover by agave size") +
   theme_bw()
-print(plot_cover_size)
+print(cover_size_plot)
+ggsave(filename = "output/cover-size-plot.pdf", plot = cover_size_plot)
 ```
 
 Ideally we would use a mixed-effect model with linear regression:
@@ -608,7 +612,7 @@ cover_data_all$agave <- "Present"
 cover_data_all$agave[cover_data_all$Status == 0] <- "Absent"
 cover_data_all$agave <- factor(x = cover_data_all$agave)
 
-plot_cover_pa <- ggplot(data = cover_data_all, 
+cover_pa_plot <- ggplot(data = cover_data_all, 
                           mapping = aes(x = agave, y = areial_cover,
                                         fill = Treatment)) +
   geom_boxplot() +
@@ -618,7 +622,8 @@ plot_cover_pa <- ggplot(data = cover_data_all,
   ylab(label = "% Cover") +
   ggtitle(label = "% Lehmann cover by agave presence") +
   theme_bw()
-print(plot_cover_pa)
+print(cover_pa_plot)
+ggsave(filename = "output/cover-pa-plot.pdf", plot = cover_pa_plot)
 ```
 
 We use a mixed-effect model:
