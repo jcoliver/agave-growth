@@ -1,18 +1,25 @@
 ---
 title: "Agaves & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "October 18, 2019"
+date: "January 30, 2020"
 output: pdf_document
 ---
 
 ```{r setup, include = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.height = 3)
-suppressPackageStartupMessages(library(lme4))
-suppressPackageStartupMessages(library(broom))
-suppressPackageStartupMessages(library(lmerTest))
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(lme4))     # glmer logistic models
+suppressPackageStartupMessages(library(broom))    # Clean up stats tables
+suppressPackageStartupMessages(library(lmerTest)) # lme models
+suppressPackageStartupMessages(library(dplyr))    # Data wrangling
+suppressPackageStartupMessages(library(ggplot2))  # Visualization
 ```
+
+# TODO: 
+
+1. How are cases when an agave was dead handled, especially for growth?
+2. With the boxplots of agave size and treatment, shade the boxes corresponding 
+to survivorship in that treatment or add survivorship (of original five agaves) 
+values near the boxes.
 
 # Summary
 A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
@@ -20,28 +27,6 @@ A trio of questions on agave (_Agave sp._) survival and growth as effected by th
 ```{r data-import}
 coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
                           stringsAsFactors = FALSE)
-# NOTE: missing values in plot 2, row 1 for live_leaf_cover of Lehmann lovegrass
-# rows; changed to NA in coronado-data-clean
-
-# NOTE: in the data processing, discovered that plot 1, row 3, plant 20 Lehmann
-# lovegrass was incorrectly labeled as J+H treatment; changed to W in 
-# coronado-data-clean
-
-# NOTE: one observation (plot 1, row 1, plant 8) had a value of "L" in the 
-# live_leaf_number column; changed to NA in coronado-data-clean
-
-# NOTE: in live_leaf_number, some cells were coded "L8" and such; leading "L"
-# was removed in coronado-data-clean
-
-# NOTE: column name "areial_cover(%" changed to "areial_cover" in 
-# coronado-data-clean
-
-# NOTE: plot 4, row 1, plant 12 and plot 4, row 2, plant 12 had D/10 and D/D 6,
-# respectively in areial_cover column. Changed to 10 and 6, respectively, in 
-# coronado-data-clean
-
-# NOTE: plot 5, row 1, no treatment was assigned (NA) in original Excel file; 
-# changed to S+W following consultation with A. Gill 2019-11-01
 
 # Treatments are sometimes referred to in different ways, i.e. J+S and S+J are 
 # both present in data set, but mean the same thing.
@@ -49,11 +34,10 @@ coronado_data$Treatment[coronado_data$Treatment == "S+J"] <- "J+S"
 coronado_data$Treatment[coronado_data$Treatment == "H+J"] <- "J+H" # may not occur
 coronado_data$Treatment[coronado_data$Treatment == "W+J"] <- "J+W"
 coronado_data$Treatment[coronado_data$Treatment == "W+S"] <- "S+W"
-# coronado_data$Treatment <- factor(as.character(coronado_data$Treatment))
 
 # The reference treatment should be control, C.
 
-# Treatments will need to be put in separate columns
+# Treatments will need to be put in separate columns for regression
 # Javalina protection
 # J and J+S and J+W and J+H
 coronado_data$Javalina <- 0
@@ -138,7 +122,8 @@ agave_counts <- agave_data %>%
   group_by(plot, Treatment) %>%
   summarize(num_alive = sum(Status))
 
-# Re-level for plotting purposes
+# Re-level so Control (C) is reference and treatments are plotted in desired 
+# order
 agave_counts$Treatment <- factor(agave_counts$Treatment,
                                  levels = c("C", "J", "J+S", "J+H", "J+W",
                                             "S", "S+H", "S+W", "H", "W"))
@@ -151,7 +136,7 @@ agave_count_plot <- ggplot(data = agave_counts,
   ggtitle(label = "Agave survival by treatment") +
   theme_bw()
 print(agave_count_plot)
-ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot)
+suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
 ```
 
 #### 1.1.a Treatment as a single predictor
