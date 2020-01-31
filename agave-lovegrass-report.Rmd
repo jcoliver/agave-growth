@@ -321,7 +321,7 @@ agave_size_plot <- ggplot(data = agave_sizes,
   ggtitle(label = "Agave size by treatment") +
   theme_bw()
 print(agave_size_plot)
-ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot)
+suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
 ```
 
 #### 1.2.a Treatment as a single predictor
