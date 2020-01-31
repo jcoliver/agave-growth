@@ -17,6 +17,8 @@ suppressPackageStartupMessages(library(ggplot2))  # Visualization
 # TODO: 
 
 1. How are cases when an agave was dead handled, especially for growth?
+    + It looks like all agaves were included in analyses, rather than a maximum
+    of three per row/plot/treatment combination.
 2. With the boxplots of agave size and treatment, shade the boxes corresponding 
 to survivorship in that treatment or add survivorship (of original five agaves) 
 values near the boxes.
