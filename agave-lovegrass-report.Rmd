@@ -17,8 +17,8 @@ suppressPackageStartupMessages(library(ggplot2))  # Visualization
 # TODO: 
 
 1. With the boxplots of agave size and treatment, shade the boxes corresponding 
-to survivorship in that treatment or add survivorship (of original five agaves) 
-values near the boxes.
+to survivorship in that treatment or add survivorship (of original five (ten?) 
+agaves) values near the boxes.
 
 # Summary
 A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
@@ -87,7 +87,7 @@ agave_data <- na.omit(agave_data)
 
 Following data cleaning, the total number of replicates and plants in each treatment is:
 
-```{r data-summary}
+```{r data-summary, message = FALSE}
 agave_summary <- agave_data %>%
   group_by(Treatment) %>%
   summarize(num_reps = length(unique(paste0(plot, Row))),
@@ -306,12 +306,23 @@ live_agave_data <- live_agave_data %>%
   ungroup()
 ```
 
-In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models. The data are restricted to cases where there was a live agave (N = `r nrow(live_agave_data)`).
+In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models. The data are restricted to cases where there was a live agave (N = `r nrow(live_agave_data)`). Furthermore, only measurements for a maximum of three agaves per row were used in analyses.
 
 ```{r plot-size, warning = FALSE}
 # Want a box plot with Treatment on x-axis, # leaves on y
 agave_sizes <- live_agave_data %>%
   select(Treatment, live_leaf_number)
+
+# Text labels indicating survivorship for each treatment
+# Dummy for testing. Need to replace values in text_labels with mean 
+# survivorship for each Treatment _and_ change live_leaf number so it lies 
+# outside the box and off center. It will likely be the 0.75 percentile for y 
+# Consider also changing name of live_leaf_number to something generic, like 
+# y_pos
+agave_survivorship <- data.frame(text_labels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+                                 live_leaf_number = rep(8, length = 10),
+                                 Treatment = c("C", "J", "J+S", "J+H", "J+W",
+                                            "S", "S+H", "S+W", "H", "W"))
 
 # Re-level for plotting purposes
 agave_sizes$Treatment <- factor(agave_sizes$Treatment,
@@ -324,6 +335,10 @@ agave_size_plot <- ggplot(data = agave_sizes,
   xlab(label = "Treatment") +
   ylab(label = "# Leaves") +
   ggtitle(label = "Agave size by treatment") +
+  geom_text(data = agave_survivorship,
+            label = agave_survivorship$text_labels, # referring to bare column won't work
+            nudge_x = 0.2, # to off-center labels to right
+            mapping = aes(x = Treatment, y = live_leaf_number)) +
   theme_bw()
 print(agave_size_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
@@ -500,6 +515,8 @@ In these analyses, the effect of agaves is modeled in two ways:
 
 1. Agave size (i.e. the number of leaves)
 2. Presence or absence of a live agave
+
+_Note_ in these analyses (Section 2), only treatments W and H _sensu stricto_ were considered. That is, data from rows with treatments J+H, J+W, S+H, and S+W are not included in plots & analyses.
 
 ### 2.1 How do selected treatments and agave size affect percent cover?
 
