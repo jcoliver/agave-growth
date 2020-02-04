@@ -1,7 +1,7 @@
 ---
 title: "Agaves & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "January 30, 2020"
+date: "February 3, 2020"
 output: pdf_document
 ---
 
@@ -13,12 +13,6 @@ suppressPackageStartupMessages(library(lmerTest)) # lme models
 suppressPackageStartupMessages(library(dplyr))    # Data wrangling
 suppressPackageStartupMessages(library(ggplot2))  # Visualization
 ```
-
-# TODO: 
-
-1. With the boxplots of agave size and treatment, shade the boxes corresponding 
-to survivorship in that treatment or add survivorship (of original five (ten?) 
-agaves) values near the boxes.
 
 # Summary
 A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
@@ -78,9 +72,6 @@ agave_data <- agave_data[, -to_drop]
 lehman_data <- coronado_data[coronado_data$Species == "Lehmann lovegarss", ]
 lehman_data <- lehman_data[, c("plot", "Row", "plant.num", "areial_cover")]
 agave_data <- merge(x = agave_data, y = lehman_data)
-
-# Drop any rows missing data
-agave_data <- na.omit(agave_data)
 ```
 
 ## 0. Data summary
@@ -297,6 +288,9 @@ live_agave_data <- agave_data[agave_data$Status == 1, ]
 # Now all values in live_leaf_number should be numeric
 live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
 
+# Drop any remaining rows with NA for leaf count
+live_agave_data <- live_agave_data[!is.na(live_agave_data$live_leaf_number), ]
+
 # For plot & analyses, only consider a maximum of 3 leaves for any 
 # plot/row/treatment combination (group %>% slice %>% ungroup)
 max_agaves <- 3
@@ -313,16 +307,41 @@ In this section, individual agave sizes (measured by number of leaves) is a cont
 agave_sizes <- live_agave_data %>%
   select(Treatment, live_leaf_number)
 
-# Text labels indicating survivorship for each treatment
-# Dummy for testing. Need to replace values in text_labels with mean 
-# survivorship for each Treatment _and_ change live_leaf number so it lies 
-# outside the box and off center. It will likely be the 0.75 percentile for y 
-# Consider also changing name of live_leaf_number to something generic, like 
-# y_pos
-agave_survivorship <- data.frame(text_labels = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-                                 live_leaf_number = rep(8, length = 10),
-                                 Treatment = c("C", "J", "J+S", "J+H", "J+W",
-                                            "S", "S+H", "S+W", "H", "W"))
+# Add text labels indicating survivorship for each treatment
+# Start by calculating mean survivorship for each treatment
+survivorship <- agave_data %>%
+  group_by(Treatment) %>%
+  summarize(mean_survivorship = round(x = mean(sum(Status)/n()), digits = 2))
+
+# Calculate 75% quantile of # leaves for positioning mean survivorship on boxplot
+# surv_quant <- live_agave_data %>%
+#   group_by(Treatment) %>%
+#   summarize(surv_75 = quantile(x = live_leaf_number, prob = 0.75))
+
+# Put label at end of upper whisker, which is the largest value no further than
+# 1.5 * IQR from the upper hinge (IQR is 0.75 - 0.25)
+leaf_whisker <- live_agave_data %>%
+  group_by(Treatment) %>%
+  summarize(whisker_max = quantile(x = live_leaf_number, prob = 0.75) +
+              1.5 * (quantile(x = live_leaf_number, prob = 0.75) -
+              quantile(x = live_leaf_number, prob = 0.25)))
+
+# Merge with agave data so we can find values for whisker
+leaf_upper_whisker <- merge(x = live_agave_data,
+                            y = leaf_whisker)
+
+# Drop any values above whisker_max for each treatment, the find largest 
+# remaining value
+leaf_upper_whisker <- leaf_upper_whisker %>%
+  filter(live_leaf_number <= whisker_max) %>%
+  group_by(Treatment) %>%
+  summarise(upper_whisker = max(live_leaf_number))
+
+# Merge survivorship values (text for plot) with whisker values (for 
+# positioning) text on the plot
+agave_survivorship <- merge(x = survivorship,
+                            y = leaf_upper_whisker,
+                            by = "Treatment")
 
 # Re-level for plotting purposes
 agave_sizes$Treatment <- factor(agave_sizes$Treatment,
@@ -336,9 +355,10 @@ agave_size_plot <- ggplot(data = agave_sizes,
   ylab(label = "# Leaves") +
   ggtitle(label = "Agave size by treatment") +
   geom_text(data = agave_survivorship,
-            label = agave_survivorship$text_labels, # referring to bare column won't work
-            nudge_x = 0.2, # to off-center labels to right
-            mapping = aes(x = Treatment, y = live_leaf_number)) +
+            label = agave_survivorship$mean_survivorship, # referring to bare column won't work
+            nudge_y = 0.7, # move labels above upper whisker
+            mapping = aes(x = Treatment, y = upper_whisker),
+            size = 4) +
   theme_bw()
 print(agave_size_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
@@ -523,6 +543,10 @@ _Note_ in these analyses (Section 2), only treatments W and H _sensu stricto_ we
 ```{r cover-data-live-prep, warning = FALSE}
 # Need to reduce data to only treatments H and W
 cover_data_live <- live_agave_data[live_agave_data$Treatment %in% c("C", "H", "W"), ]
+
+# Drop rows missing percent cover data
+cover_data_live <- cover_data_live[!(is.na(cover_data_live$areial_cover)), ]
+
 cover_data_live$Treatment <- factor(x = cover_data_live$Treatment)
 ```
 
@@ -610,6 +634,9 @@ _Note_: Similar to question 1.2, there are several H/W treatments with zero leaf
 cover_data_all <- agave_data[agave_data$Treatment %in% c("C", "H", "W"), ]
 cover_data_all$Treatment <- factor(x = cover_data_all$Treatment)
 cover_data_all$Status <- factor(x = cover_data_all$Status)
+
+# Drop rows missing percent cover data
+cover_data_all <- cover_data_all[!is.na(cover_data_all$areial_cover), ]
 ```
 
 In contrast to 2.1, we instead use presence or absence of a live agave in the model (N = `r nrow(cover_data_all)`). 
@@ -699,7 +726,7 @@ Where $b_0$ is the random intercept for plot.
 # Treating "Treatment" as a single variable
 # Will most likely fail to converge
 surv_single_cover_model <- glmer(formula = Status ~ Treatment + areial_cover + (1|plot),
-                                 data = agave_data,
+                                 data = agave_data[!is.na(agave_data$areial_cover), ],
                                  family = binomial(link = "logit"))
 # Retrieve model estimates, for second run
 ss <- getME(surv_single_cover_model, name = c("theta", "fixef"))
@@ -748,7 +775,7 @@ Where $b_0$ is the random intercept for plot. This is a modification of the mode
 ```{r size-treatment-cover, warning = FALSE}
 # Run model with plot as a random effect
 size_single_cover_model <- lmerTest::lmer(formula = live_leaf_number ~ Treatment + areial_cover + (1|plot),
-                    data = live_agave_data)
+                    data = live_agave_data[!is.na(live_agave_data$areial_cover), ])
 size_single_cover_summary <- summary(size_single_cover_model)
 
 # Pull out the coefficients
