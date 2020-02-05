@@ -1,7 +1,7 @@
 ---
-title: "Agaves & Lehmann Lovegrass"
+title: "Palmer's Agave & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "February 3, 2020"
+date: "February 5, 2020"
 output: pdf_document
 ---
 
@@ -15,7 +15,7 @@ suppressPackageStartupMessages(library(ggplot2))  # Visualization
 ```
 
 # Summary
-A trio of questions on agave (_Agave sp._) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
+A trio of questions on agave (_Agave palmeri_) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
 
 ```{r data-import}
 coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
@@ -123,7 +123,7 @@ agave_count_plot <- ggplot(data = agave_counts,
   geom_boxplot() +
   xlab(label = "Treatment") +
   ylab(label = "# Live Agaves") +
-  ggtitle(label = "Agave survival by treatment") +
+  ggtitle(label = "Figure 1.1. Agave survival by treatment") +
   theme_bw()
 print(agave_count_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
@@ -351,9 +351,13 @@ agave_sizes$Treatment <- factor(agave_sizes$Treatment,
 agave_size_plot <- ggplot(data = agave_sizes, 
                             mapping = aes(x = Treatment, y = live_leaf_number)) +
   geom_boxplot() +
-  xlab(label = "Treatment") +
-  ylab(label = "# Leaves") +
-  ggtitle(label = "Agave size by treatment") +
+  labs(title = "Figure 1.2. Agave size by treatment",
+       subtitle = "Numbers in plot show mean survivorship for treatment",
+       x = "Treatment",
+       y = "# Leaves") +
+  # xlab(label = "Treatment") +
+  # ylab(label = "# Leaves") +
+  # ggtitle(label = "Figure 1.2. Agave size by treatment") +
   geom_text(data = agave_survivorship,
             label = agave_survivorship$mean_survivorship, # referring to bare column won't work
             nudge_y = 0.7, # move labels above upper whisker
@@ -561,7 +565,7 @@ cover_size_plot <- ggplot(data = cover_data_live,
                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
   xlab(label = "# Leaves") +
   ylab(label = "% Cover") +
-  ggtitle(label = "% Lehmann cover by agave size") +
+  ggtitle(label = "Figure 2.1. % Lehmann cover by agave size") +
   theme_bw()
 print(cover_size_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-size-plot.pdf", plot = cover_size_plot))
@@ -654,7 +658,7 @@ cover_pa_plot <- ggplot(data = cover_data_all,
                      labels = c("Control", "Hand-pulling", "Weed-eating")) +
   xlab(label = "Agave") +
   ylab(label = "% Cover") +
-  ggtitle(label = "% Lehmann cover by agave presence") +
+  ggtitle(label = "Figure 2.2. % Lehmann cover by agave presence") +
   theme_bw()
 print(cover_pa_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-pa-plot.pdf", plot = cover_pa_plot))
