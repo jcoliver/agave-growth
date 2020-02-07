@@ -2,7 +2,9 @@
 title: "Palmer's Agave & Lehmann Lovegrass"
 author: "Jeff Oliver"
 date: "February 5, 2020"
-output: pdf_document
+output: 
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include = FALSE, warning = FALSE}

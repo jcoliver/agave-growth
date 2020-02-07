@@ -12,3 +12,10 @@ The three primary questions are:
 2. How do the weed-eating and hand-pulling treatments affect agave growth and 
 percent cover of Lehmann lovegrass?
 3. How does percent cover of Lehmann lovegrass affect agave survival and growth?
+
+## Dependencies
++ lme4, glmer logistic models
++ broom, table formatting of statistical output
++ lmerTest, lme models
++ dplyr, data wrangling
++ ggplot2, data visualization
