@@ -14,7 +14,11 @@ suppressPackageStartupMessages(library(broom))    # Clean up stats tables
 suppressPackageStartupMessages(library(lmerTest)) # lme models
 suppressPackageStartupMessages(library(dplyr))    # Data wrangling
 suppressPackageStartupMessages(library(ggplot2))  # Visualization
+suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 ```
+
+# TODO:
+2. add mean survivorship numbers to figure 1.1 (already in figure 1.2)
 
 # Summary
 A trio of questions on agave (_Agave palmeri_) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
@@ -108,6 +112,69 @@ The inclusion of treatment in the models can be done in two different ways:
 
 In this model, survival is treated as a binary response variable and a logistic regression model is applied (N = `r nrow(agave_data)`).
 
+
+```{r prep-live-agave-data}
+# For figure, want to include survivorship values for each treatment
+
+# Start by dropping all dead plants
+live_agave_data <- agave_data[agave_data$Status == 1, ]
+
+# Now all values in live_leaf_number should be numeric
+live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
+
+# Drop any remaining rows with NA for leaf count
+live_agave_data <- live_agave_data[!is.na(live_agave_data$live_leaf_number), ]
+
+# For plot & analyses, only consider a maximum of 3 leaves for any 
+# plot/row/treatment combination (group %>% slice %>% ungroup)
+max_agaves <- 3
+live_agave_data <- live_agave_data %>%
+  group_by(plot, Row) %>%
+  slice(1:max_agaves) %>%
+  ungroup()
+```
+
+```{r calculate-survivorship}
+# Add text labels indicating survivorship for each treatment
+# Start by calculating mean survivorship for each treatment
+survivorship <- agave_data %>%
+  group_by(Treatment) %>%
+  summarize(mean_survivorship = round(x = mean(sum(Status)/n()), digits = 2))
+
+# Calculate 75% quantile of survivorship for positioning mean survivorship on boxplot
+agave_counts <- agave_data %>%
+  group_by(plot, Treatment) %>%
+  summarize(num_alive = sum(Status))
+
+# Put label at end of upper whisker, which is the largest value no further than
+# 1.5 * IQR from the upper hinge (IQR is 0.75 - 0.25)
+survival_whisker <- agave_counts %>%
+  ungroup() %>%
+  group_by(Treatment) %>%
+  summarize(whisker_max = quantile(x = num_alive, prob = 0.75) +
+              1.5 * (quantile(x = num_alive, prob = 0.75) -
+              quantile(x = num_alive, prob = 0.25)))
+
+# Merge with agave data so we can find values for whisker
+survival_upper_whisker <- merge(x = agave_counts,
+                                y = survival_whisker)
+
+# Drop any values above whisker_max for each treatment, the find largest 
+# remaining value
+survival_upper_whisker <- survival_upper_whisker %>%
+  filter(num_alive <= whisker_max) %>%
+  group_by(Treatment) %>%
+  summarise(upper_whisker = max(num_alive))
+
+# TODO: rename df below and change y to survival_upper_whisker
+
+# Merge survivorship values (text for plot) with whisker values (for 
+# positioning) text on the plot
+agave_survivorship <- merge(x = survivorship,
+                            y = leaf_upper_whisker,
+                            by = "Treatment")
+```
+
 ```{r plot-survival, warning = FALSE}
 # Want a box plot with Treatment on x-axis, # live plants/plot on y
 agave_counts <- agave_data %>%
@@ -126,7 +193,16 @@ agave_count_plot <- ggplot(data = agave_counts,
   xlab(label = "Treatment") +
   ylab(label = "# Live Agaves") +
   ggtitle(label = "Figure 1.1. Agave survival by treatment") +
-  theme_bw()
+  
+  geom_text(data = agave_survivorship,
+            label = agave_survivorship$mean_survivorship, # referring to bare column won't work
+            nudge_y = 0.7, # move labels above upper whisker
+            mapping = aes(x = Treatment, y = upper_whisker),
+            size = 4,
+            family = "Times New Roman") +
+  
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
 print(agave_count_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
 ```
@@ -283,25 +359,6 @@ if (any(surv_interact_coeffs$p.value < 1e-5)) {
 
 ### 1.2. How does treatment affect agave size?
 
-```{r prep-live-agave-data}
-# Start by dropping all dead plants
-live_agave_data <- agave_data[agave_data$Status == 1, ]
-
-# Now all values in live_leaf_number should be numeric
-live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
-
-# Drop any remaining rows with NA for leaf count
-live_agave_data <- live_agave_data[!is.na(live_agave_data$live_leaf_number), ]
-
-# For plot & analyses, only consider a maximum of 3 leaves for any 
-# plot/row/treatment combination (group %>% slice %>% ungroup)
-max_agaves <- 3
-live_agave_data <- live_agave_data %>%
-  group_by(plot, Row) %>%
-  slice(1:max_agaves) %>%
-  ungroup()
-```
-
 In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models. The data are restricted to cases where there was a live agave (N = `r nrow(live_agave_data)`). Furthermore, only measurements for a maximum of three agaves per row were used in analyses.
 
 ```{r plot-size, warning = FALSE}
@@ -309,41 +366,7 @@ In this section, individual agave sizes (measured by number of leaves) is a cont
 agave_sizes <- live_agave_data %>%
   select(Treatment, live_leaf_number)
 
-# Add text labels indicating survivorship for each treatment
-# Start by calculating mean survivorship for each treatment
-survivorship <- agave_data %>%
-  group_by(Treatment) %>%
-  summarize(mean_survivorship = round(x = mean(sum(Status)/n()), digits = 2))
-
-# Calculate 75% quantile of # leaves for positioning mean survivorship on boxplot
-# surv_quant <- live_agave_data %>%
-#   group_by(Treatment) %>%
-#   summarize(surv_75 = quantile(x = live_leaf_number, prob = 0.75))
-
-# Put label at end of upper whisker, which is the largest value no further than
-# 1.5 * IQR from the upper hinge (IQR is 0.75 - 0.25)
-leaf_whisker <- live_agave_data %>%
-  group_by(Treatment) %>%
-  summarize(whisker_max = quantile(x = live_leaf_number, prob = 0.75) +
-              1.5 * (quantile(x = live_leaf_number, prob = 0.75) -
-              quantile(x = live_leaf_number, prob = 0.25)))
-
-# Merge with agave data so we can find values for whisker
-leaf_upper_whisker <- merge(x = live_agave_data,
-                            y = leaf_whisker)
-
-# Drop any values above whisker_max for each treatment, the find largest 
-# remaining value
-leaf_upper_whisker <- leaf_upper_whisker %>%
-  filter(live_leaf_number <= whisker_max) %>%
-  group_by(Treatment) %>%
-  summarise(upper_whisker = max(live_leaf_number))
-
-# Merge survivorship values (text for plot) with whisker values (for 
-# positioning) text on the plot
-agave_survivorship <- merge(x = survivorship,
-                            y = leaf_upper_whisker,
-                            by = "Treatment")
+# CUT FROM HERE
 
 # Re-level for plotting purposes
 agave_sizes$Treatment <- factor(agave_sizes$Treatment,
@@ -364,8 +387,10 @@ agave_size_plot <- ggplot(data = agave_sizes,
             label = agave_survivorship$mean_survivorship, # referring to bare column won't work
             nudge_y = 0.7, # move labels above upper whisker
             mapping = aes(x = Treatment, y = upper_whisker),
-            size = 4) +
-  theme_bw()
+            size = 4,
+            family = "Times New Roman") +
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
 print(agave_size_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
 ```
@@ -568,7 +593,8 @@ cover_size_plot <- ggplot(data = cover_data_live,
   xlab(label = "# Leaves") +
   ylab(label = "% Cover") +
   ggtitle(label = "Figure 2.1. % Lehmann cover by agave size") +
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
 print(cover_size_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-size-plot.pdf", plot = cover_size_plot))
 ```
@@ -661,7 +687,8 @@ cover_pa_plot <- ggplot(data = cover_data_all,
   xlab(label = "Agave") +
   ylab(label = "% Cover") +
   ggtitle(label = "Figure 2.2. % Lehmann cover by agave presence") +
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
 print(cover_pa_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-pa-plot.pdf", plot = cover_pa_plot))
 ```
