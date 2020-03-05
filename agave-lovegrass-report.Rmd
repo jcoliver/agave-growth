@@ -3,8 +3,8 @@ title: "Palmer's Agave & Lehmann Lovegrass"
 author: "Jeff Oliver"
 date: "February 5, 2020"
 output: 
-  word_document: default
   pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include = FALSE, warning = FALSE}
@@ -18,8 +18,7 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 ```
 
 # TODO
-1. Change two boxplots to show 90% CI (0.05 & 0.95); see https://stackoverflow.com/questions/21310609/ggplot2-box-whisker-plot-show-95-confidence-intervals-remove-outliers
-2. Apply post-hoc test with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html. 
+1. Apply post-hoc test with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html. 
     + Which tests?
 
 
@@ -150,32 +149,16 @@ agave_counts <- agave_data %>%
   group_by(plot, Treatment) %>%
   summarize(num_alive = sum(Status))
 
-# Put label at end of upper whisker, which is the largest value no further than
-# 1.5 * IQR from the upper hinge (IQR is 0.75 - 0.25). 
-# Calculate 75% quantile of the number of live agaves for positioning of mean 
-# survivorship text 
-survival_whisker <- agave_counts %>%
+# Put label at end of upper whisker, which is the 95% quantile of counts
+count_whisker <- agave_counts %>%
   ungroup() %>%
   group_by(Treatment) %>%
-  summarize(whisker_max = quantile(x = num_alive, prob = 0.75) +
-              1.5 * (quantile(x = num_alive, prob = 0.75) -
-              quantile(x = num_alive, prob = 0.25)))
-
-# Merge with agave data so we can find values for whisker
-survival_upper_whisker <- merge(x = agave_counts,
-                                y = survival_whisker)
-
-# Drop any values above whisker_max for each treatment, the find largest 
-# remaining value
-survival_upper_whisker <- survival_upper_whisker %>%
-  filter(num_alive <= whisker_max) %>%
-  group_by(Treatment) %>%
-  summarise(upper_whisker = max(num_alive))
+  summarize(upper_whisker = quantile(x = num_alive, prob = 0.95))
 
 # Merge survivorship values (text for plot) with whisker values (for 
 # positioning) text on the plot
 survive_text_counts <- merge(x = survivorship,
-                             y = survival_upper_whisker,
+                             y = count_whisker,
                              by = "Treatment")
 ```
 
@@ -189,20 +172,25 @@ agave_counts$Treatment <- factor(agave_counts$Treatment,
                                  levels = c("C", "J", "J+S", "J+H", "J+W",
                                             "S", "S+H", "S+W", "H", "W"))
 
-agave_count_plot <- ggplot(data = agave_counts, 
-                            mapping = aes(x = Treatment, y = num_alive)) +
-  geom_boxplot() +
+# Function to use with stat_summary for non-default value for whiskers
+# See https://stackoverflow.com/questions/21310609/ggplot2-box-whisker-plot-show-95-confidence-intervals-remove-outliers
+boxplot_quantiles <- function(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95)) {
+  q_vec <- quantile(x, probs = probs)
+  names(q_vec) <- c("ymin", "lower", "middle", "upper", "ymax")
+  return(q_vec)
+}
+
+agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
+  stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
   xlab(label = "Treatment") +
   ylab(label = "# Live Agaves") +
   ggtitle(label = "Figure 1.1. Agave survival by treatment") +
-  
   geom_text(data = survive_text_counts,
             label = survive_text_counts$mean_survivorship, # referring to bare column won't work
             nudge_y = 0.6, # move labels above upper whisker
             mapping = aes(x = Treatment, y = upper_whisker),
             size = 4,
             family = "Times New Roman") +
-  
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(agave_count_plot)
@@ -368,7 +356,17 @@ In this section, individual agave sizes (measured by number of leaves) is a cont
 agave_sizes <- live_agave_data %>%
   select(Treatment, live_leaf_number)
 
-# CUT FROM HERE
+# Put label at end of upper whisker, which is the 95% quantile of sizes
+size_whisker <- agave_sizes %>%
+  ungroup() %>%
+  group_by(Treatment) %>%
+  summarize(upper_whisker = quantile(x = live_leaf_number, prob = 0.95))
+
+# Merge survivorship values (text for plot) with whisker values (for 
+# positioning) text on the plot
+survive_text_size <- merge(x = survivorship,
+                           y = size_whisker,
+                           by = "Treatment")
 
 # Re-level for plotting purposes
 agave_sizes$Treatment <- factor(agave_sizes$Treatment,
@@ -377,16 +375,13 @@ agave_sizes$Treatment <- factor(agave_sizes$Treatment,
 
 agave_size_plot <- ggplot(data = agave_sizes, 
                             mapping = aes(x = Treatment, y = live_leaf_number)) +
-  geom_boxplot() +
+  stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
   labs(title = "Figure 1.2. Agave size by treatment",
        subtitle = "Numbers in plot show mean survivorship for treatment",
        x = "Treatment",
        y = "# Leaves") +
-  # xlab(label = "Treatment") +
-  # ylab(label = "# Leaves") +
-  # ggtitle(label = "Figure 1.2. Agave size by treatment") +
-  geom_text(data = agave_survivorship,
-            label = agave_survivorship$mean_survivorship, # referring to bare column won't work
+  geom_text(data = survive_text_size,
+            label = survive_text_size$mean_survivorship, # referring to bare column won't work
             nudge_y = 0.7, # move labels above upper whisker
             mapping = aes(x = Treatment, y = upper_whisker),
             size = 4,
@@ -683,7 +678,11 @@ cover_data_all$agave <- factor(x = cover_data_all$agave)
 cover_pa_plot <- ggplot(data = cover_data_all, 
                           mapping = aes(x = agave, y = areial_cover,
                                         fill = Treatment)) +
-  geom_boxplot() +
+  stat_summary(fun.data = boxplot_quantiles, 
+               geom = "boxplot",
+               position = position_dodge(width = 0.7),
+               width = 0.5) +
+  # geom_boxplot() +
   scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
                      labels = c("Control", "Hand-pulling", "Weed-eating")) +
   xlab(label = "Agave") +
