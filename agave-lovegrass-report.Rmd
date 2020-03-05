@@ -17,8 +17,11 @@ suppressPackageStartupMessages(library(ggplot2))  # Visualization
 suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 ```
 
-# TODO:
-2. add mean survivorship numbers to figure 1.1 (already in figure 1.2)
+# TODO
+1. Change two boxplots to show 90% CI (0.05 & 0.95); see https://stackoverflow.com/questions/21310609/ggplot2-box-whisker-plot-show-95-confidence-intervals-remove-outliers
+2. Apply post-hoc test with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html. 
+    + Which tests?
+
 
 # Summary
 A trio of questions on agave (_Agave palmeri_) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
@@ -134,20 +137,23 @@ live_agave_data <- live_agave_data %>%
   ungroup()
 ```
 
-```{r calculate-survivorship}
+```{r calculate-counts-survivorship}
 # Add text labels indicating survivorship for each treatment
 # Start by calculating mean survivorship for each treatment
 survivorship <- agave_data %>%
   group_by(Treatment) %>%
   summarize(mean_survivorship = round(x = mean(sum(Status)/n()), digits = 2))
 
-# Calculate 75% quantile of survivorship for positioning mean survivorship on boxplot
+# Because the text will be on the graph of agave counts, we are looking at the 
+# counts of live agave to determine positioning of text.
 agave_counts <- agave_data %>%
   group_by(plot, Treatment) %>%
   summarize(num_alive = sum(Status))
 
 # Put label at end of upper whisker, which is the largest value no further than
-# 1.5 * IQR from the upper hinge (IQR is 0.75 - 0.25)
+# 1.5 * IQR from the upper hinge (IQR is 0.75 - 0.25). 
+# Calculate 75% quantile of the number of live agaves for positioning of mean 
+# survivorship text 
 survival_whisker <- agave_counts %>%
   ungroup() %>%
   group_by(Treatment) %>%
@@ -166,20 +172,16 @@ survival_upper_whisker <- survival_upper_whisker %>%
   group_by(Treatment) %>%
   summarise(upper_whisker = max(num_alive))
 
-# TODO: rename df below and change y to survival_upper_whisker
-
 # Merge survivorship values (text for plot) with whisker values (for 
 # positioning) text on the plot
-agave_survivorship <- merge(x = survivorship,
-                            y = leaf_upper_whisker,
-                            by = "Treatment")
+survive_text_counts <- merge(x = survivorship,
+                             y = survival_upper_whisker,
+                             by = "Treatment")
 ```
 
 ```{r plot-survival, warning = FALSE}
-# Want a box plot with Treatment on x-axis, # live plants/plot on y
-agave_counts <- agave_data %>%
-  group_by(plot, Treatment) %>%
-  summarize(num_alive = sum(Status))
+# A box plot with Treatment on x-axis, # live plants/plot on y; agave counts 
+# already calculated in calculate-counts-survivorship block, above
 
 # Re-level so Control (C) is reference and treatments are plotted in desired 
 # order
@@ -194,9 +196,9 @@ agave_count_plot <- ggplot(data = agave_counts,
   ylab(label = "# Live Agaves") +
   ggtitle(label = "Figure 1.1. Agave survival by treatment") +
   
-  geom_text(data = agave_survivorship,
-            label = agave_survivorship$mean_survivorship, # referring to bare column won't work
-            nudge_y = 0.7, # move labels above upper whisker
+  geom_text(data = survive_text_counts,
+            label = survive_text_counts$mean_survivorship, # referring to bare column won't work
+            nudge_y = 0.6, # move labels above upper whisker
             mapping = aes(x = Treatment, y = upper_whisker),
             size = 4,
             family = "Times New Roman") +
