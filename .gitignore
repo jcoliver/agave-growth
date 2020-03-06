@@ -5,3 +5,4 @@
 *.Rproj
 output/*
 !output/.gitkeep
+!output/*.pdf

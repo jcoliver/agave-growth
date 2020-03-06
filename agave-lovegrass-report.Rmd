@@ -1,7 +1,7 @@
 ---
 title: "Palmer's Agave & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "February 5, 2020"
+date: "March 6, 2020"
 output: 
   pdf_document: default
   word_document: default
@@ -9,18 +9,18 @@ output:
 
 ```{r setup, include = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.height = 3)
-suppressPackageStartupMessages(library(lme4))     # glmer logistic models
-suppressPackageStartupMessages(library(broom))    # Clean up stats tables
-suppressPackageStartupMessages(library(lmerTest)) # lme models
-suppressPackageStartupMessages(library(dplyr))    # Data wrangling
-suppressPackageStartupMessages(library(ggplot2))  # Visualization
+suppressPackageStartupMessages(library(lme4))       # glmer logistic models
+suppressPackageStartupMessages(library(broom))      # Clean up stats tables
+suppressPackageStartupMessages(library(lmerTest))   # lme models
+suppressPackageStartupMessages(library(dplyr))      # Data wrangling
+suppressPackageStartupMessages(library(ggplot2))    # Visualization
 suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 ```
 
+```{r}
 # TODO
-1. Apply post-hoc test with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html. 
-    + Which tests?
-
+# Apply post-hoc test with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html. 
+```
 
 # Summary
 A trio of questions on agave (_Agave palmeri_) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
@@ -137,7 +137,11 @@ live_agave_data <- live_agave_data %>%
 ```
 
 ```{r calculate-counts-survivorship}
-# Add text labels indicating survivorship for each treatment
+# For boxplots of counts and size (leaf number), want to include text for each 
+# treatment showing the survivorship for that treatment. The positioning of the 
+# text labels (right above the upper whisker) requires calculating where the 
+# upper whisker will end.
+
 # Start by calculating mean survivorship for each treatment
 survivorship <- agave_data %>%
   group_by(Treatment) %>%
@@ -160,6 +164,9 @@ count_whisker <- agave_counts %>%
 survive_text_counts <- merge(x = survivorship,
                              y = count_whisker,
                              by = "Treatment")
+
+# Text to print under each boxplot, indicating what the whiskers mean
+boxplot_text <- "Boxplots show median (center line), 25th and 75th percentiles (lower and upper box boundaries, respectively), and 5th and 95th percentiles (lower and upper whisker, respectively)"
 ```
 
 ```{r plot-survival, warning = FALSE}
@@ -196,6 +203,7 @@ agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y =
 print(agave_count_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
 ```
+`r boxplot_text`
 
 #### 1.1.a Treatment as a single predictor
 
@@ -391,6 +399,7 @@ agave_size_plot <- ggplot(data = agave_sizes,
 print(agave_size_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
 ```
+`r boxplot_text`
 
 #### 1.2.a Treatment as a single predictor
 
@@ -693,6 +702,7 @@ cover_pa_plot <- ggplot(data = cover_data_all,
 print(cover_pa_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-pa-plot.pdf", plot = cover_pa_plot))
 ```
+`r boxplot_text`
 
 We use a mixed-effect model:
 
