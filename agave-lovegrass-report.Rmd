@@ -21,15 +21,11 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 # TODO
 # 1. Apply post-hoc test to 1.1a and 1.2a with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html.
 # 2. Consider adding asterisks to indicate significant differences (from control?)
-# 3. Replace percent sign (%) and number sign (#) in figures
 # 4. See if there is an easy way to add outliers to plots while using stat_summary instead of geom_boxplot
 # 5. Check explanations
 # 6. Fix p-values of 0.
-# 7. Check 2.1 graph, N = 18, but only 16 points?
-#     + Have different symbol shape for each Treatment
-#     + Add regression lines for each Treatment
 # 8. Add example of logistic regression explanation of coefficient estimates
-# 9. Update author info and add
+# 9. Update author info and add comments on MS
 ```
 
 # Summary
@@ -258,6 +254,96 @@ if (any(surv_single_coeffs$p.value < 1e-5)) {
   cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
 }
 ```
+
+##### Aside: interpreting logistic regression
+
+Interpreting the results of logistic regression in terms of probabilities requires examination of how the log-odds model works. We are primarily interested in the probability of survival for given values of $Treatment$, i.e. $p(Survival|Treatment)$. We can model this with the logistic function:
+
+$$
+p(Survival|Treatment) = {e^{\beta_{0} + \beta_{1}Treatment}\over 1 + e^{\beta_{0} + \beta_{1}Treatment}}
+$$
+
+However, the relationship between our variable of interest ($p(Survival)$) and the predictor ($Treatment$) is not linear. Using some algebraic rearranging, we arrive at the logit model:
+$$
+p(Survival|Treatment) = {e^{\beta_{0} + \beta_{1}Treatment}\over 1 + e^{\beta_{0} + \beta_{1}Treatment}}
+$$
+
+$$
+p(Survival|Treatment) \times (1 + e^{\beta_{0} + \beta_{1}Treatment}) = e^{\beta_{0} + \beta_{1}Treatment}
+$$
+
+$$
+p(Survival|Treatment) + p(Survival|Treatment) \times e^{\beta_{0} + \beta_{1}Treatment} = e^{\beta_{0} + \beta_{1}Treatment}
+$$
+
+$$
+p(Survival|Treatment) = e^{\beta_{0} + \beta_{1}Treatment} - p(Survival|Treatment) \times e^{\beta_{0} + \beta_{1}Treatment}
+$$
+
+$$
+p(Survival|Treatment) = e^{\beta_{0} + \beta_{1}Treatment} \times (1 - p(Survival|Treatment))
+$$
+
+$$
+{p(Survival|Treatment) \over 1 - p(Survival|Treatment)} = e^{\beta_{0} + \beta_{1}Treatment}
+$$
+
+Finally, we take the natural logarithm of both sides to get:
+$$
+ln \left({p(Survival|Treatment) \over 1 - p(Survival|Treatment)}\right) = \beta_{0} + \beta_{1}Treatment
+$$
+
+Which is the familiar log-odds model from above:
+$$
+Log{-}odds \enspace Survival = \beta_0 + \beta_1 \times Treatment
+$$
+
+So how do we interpret the $\beta$ coefficients from the model? For this model, let us compare the probability of survival in the Control treatment and the probability of survival in the hand-pulling treatment. We can use the original probability model, but because it is the control, we drop the $\beta_{1}Treatment$ terms because $Treatment$ in this case is zero.
+
+$$
+p(Survival|Treatment = Control) = {e^{\beta_{0}}\over 1 + e^{\beta_{0}}}
+$$
+
+substituting in the value for $\beta_{0} = `r round(surv_single_coeffs[1, 2], digits = 3)`$,
+
+```{r extract-surv-betas, echo = FALSE}
+b_0 <- round(surv_single_coeffs[1, 2], digits = 3)
+b_1 <- round(surv_single_coeffs[2, 2], digits = 3)
+```
+
+$$
+p(Survival|Treatment = Control) = {e^{`r b_0`}\over 1 + e^{`r b_0`}}
+$$
+
+```{r control-prob, echo = FALSE}
+p_c <- exp(x = surv_single_coeffs[1, 2]) / (1 + exp(x = surv_single_coeffs[1, 2]))
+p_c <- round(p_c, digits = 3)
+```
+
+And the estimated probability for survival in the Control group is then `r p_c`.
+
+For the survival probability of the hand-pulling treatment, we start with the same probability model:
+
+$$
+p(Survival|Treatment = Hand-pulling) = {e^{\beta_{0} + \beta_{1}Treatment}\over 1 + e^{\beta_{0} + \beta_{1}Treatment}}
+$$
+
+Set $Treatment$ equal to 1 and use the coefficient estimate from the table above for $\beta_{1} = `r round(surv_single_coeffs[2, 2], digits = 3)`$:
+
+$$
+p(Survival|Treatment = Hand-pulling) = {e^{`r b_0` + `r b_1`}\over 1 + e^{`r b_0` + `r b_1`}}
+$$
+
+```{r hand-pulling-prob, echo = FALSE}
+p_h <- exp(x = (surv_single_coeffs[1, 2] + surv_single_coeffs[2, 2])) / (1 + exp(x = surv_single_coeffs[1, 2] + surv_single_coeffs[2, 2]))
+p_h <- round(p_h, digits = 3)
+```
+
+And the estimated probability for survival in the Hand-pulling treatment is then `r p_h`.
+
+Finally, we can compare the two by calculating the difference in probabilities, `r p_h` - `r p_c` = `r p_h - p_c`.
+
+Note the explanation above does not discuss random effects of plot. So when reporting these values, it is best to say that this is the _average_ effect of treatment on survival.
 
 #### 1.1.b Treatment as multiple predictors
 
@@ -595,25 +681,60 @@ cover_data_live <- live_agave_data[live_agave_data$Treatment %in% c("C", "H", "W
 cover_data_live <- cover_data_live[!(is.na(cover_data_live$areial_cover)), ]
 
 cover_data_live$Treatment <- factor(x = cover_data_live$Treatment)
+
+# Only 18 rows of data when H, W, and C are included. Too few for mixed-effects
+# Running linear regression early so we can add lines to plot
+cover_size_model <- lm(formula = areial_cover ~ Treatment + live_leaf_number, data = cover_data_live)
+cover_size_summary <- summary(cover_size_model)
+
+cover_size_coeffs <- cover_size_summary$coefficients
+
+# Coerce to a data frame
+cover_size_coeffs <- as.data.frame(cover_size_coeffs)
 ```
 
-Here we are interested to know how certain treatments and the _size_ of the agave plants affect the % cover of Lehman lovegrass (N = `r nrow(cover_data_live)`). 
+Here we are interested to know how certain treatments and the _size_ of the agave plants affect the percent cover of Lehman lovegrass (N = `r nrow(cover_data_live)`). 
 
 ```{r plot-cover-size}
+# control_model <- B0 + B2 * live_leaf_number
+# hand_pulling_model <- B0 + B1 + B2 * live_leaf_number
+# Find limits of data and predict those limits for line ends
+# For Control treatment
+control_limits <- c(min(cover_data_live$live_leaf_number[cover_data_live$Treatment == "C"]),
+                    max(cover_data_live$live_leaf_number[cover_data_live$Treatment == "C"]))
+control_line <- data.frame(Treatment = "C",
+                              live_leaf_number = control_limits)
+control_line$areial_cover <- predict(cover_size_model, newdata = control_line)
+rm(control_limits)
+# For Hand-pulling treatment
+hand_pulling_limits <- c(min(cover_data_live$live_leaf_number[cover_data_live$Treatment == "H"]),
+                         max(cover_data_live$live_leaf_number[cover_data_live$Treatment == "H"]))
+hand_pulling_line <- data.frame(Treatment = "H",
+                                   live_leaf_number = hand_pulling_limits)
+hand_pulling_line$areial_cover <- predict(cover_size_model, newdata = hand_pulling_line)
+rm(hand_pulling_limits)
+
 cover_size_plot <- ggplot(data = cover_data_live, 
                           mapping = aes(x = live_leaf_number, y = areial_cover,
-                                        group = Treatment, fill = Treatment)) +
-  geom_point(size = 2.0, shape = 21, alpha = 0.75) +
+                                        group = Treatment, fill = Treatment,
+                                        shape = Treatment)) +
+  geom_line(data = control_line, color = "#787878") +
+  geom_line(data = hand_pulling_line, color = "#D8B365") +
+  geom_point(size = 2.0, alpha = 0.75) +
   scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
+  scale_shape_manual(values = c(21, 22, 24), # Circle, square, triangle
+                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
   xlab(label = "Number of leaves") +
   ylab(label = "Percent cover") +
-  ggtitle(label = "Figure 2.1. % Lehmann cover by agave size") +
+  ggtitle(label = "Figure 2.1. Percent Lehmann cover by agave size") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(cover_size_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-size-plot.pdf", plot = cover_size_plot))
 ```
+Note in the plot above, there are some points with identical values, e.g. there are two observations where the number of leaves was 4 and percent cover was 12%.
+
 
 Ideally we would use a mixed-effect model with linear regression:
 
@@ -628,20 +749,6 @@ $$
 $$
 
 ```{r cover-analysis-size, warning = FALSE}
-# Only 18 rows of data when H, W, and C are included. Too few for mixed-effects
-
-# Run linear model with plot as random effect
-# cover_size_model <- lmerTest::lmer(formula = areial_cover ~ Treatment + live_leaf_number + (1|plot),
-#                               data = cover_data_live)
-
-cover_size_model <- lm(formula = areial_cover ~ Treatment + live_leaf_number, data = cover_data_live)
-cover_size_summary <- summary(cover_size_model)
-
-cover_size_coeffs <- cover_size_summary$coefficients
-
-# Coerce to a data frame
-cover_size_coeffs <- as.data.frame(cover_size_coeffs)
-
 # Add rownames as first column
 cover_size_coeffs <- cbind(Predictor = rownames(cover_size_coeffs),
                       cover_size_coeffs)
