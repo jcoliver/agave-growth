@@ -19,7 +19,17 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 
 ```{r}
 # TODO
-# Apply post-hoc test with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html. 
+# 1. Apply post-hoc test to 1.1a and 1.2a with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html.
+# 2. Consider adding asterisks to indicate significant differences (from control?)
+# 3. Replace percent sign (%) and number sign (#) in figures
+# 4. See if there is an easy way to add outliers to plots while using stat_summary instead of geom_boxplot
+# 5. Check explanations
+# 6. Fix p-values of 0.
+# 7. Check 2.1 graph, N = 18, but only 16 points?
+#     + Have different symbol shape for each Treatment
+#     + Add regression lines for each Treatment
+# 8. Add example of logistic regression explanation of coefficient estimates
+# 9. Update author info and add
 ```
 
 # Summary
@@ -190,7 +200,7 @@ boxplot_quantiles <- function(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95)) {
 agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
   xlab(label = "Treatment") +
-  ylab(label = "# Live Agaves") +
+  ylab(label = "Number of live agaves") +
   ggtitle(label = "Figure 1.1. Agave survival by treatment") +
   geom_text(data = survive_text_counts,
             label = survive_text_counts$mean_survivorship, # referring to bare column won't work
@@ -387,7 +397,7 @@ agave_size_plot <- ggplot(data = agave_sizes,
   labs(title = "Figure 1.2. Agave size by treatment",
        subtitle = "Numbers in plot show mean survivorship for treatment",
        x = "Treatment",
-       y = "# Leaves") +
+       y = "Number of leaves") +
   geom_text(data = survive_text_size,
             label = survive_text_size$mean_survivorship, # referring to bare column won't work
             nudge_y = 0.7, # move labels above upper whisker
@@ -596,8 +606,8 @@ cover_size_plot <- ggplot(data = cover_data_live,
   geom_point(size = 2.0, shape = 21, alpha = 0.75) +
   scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
-  xlab(label = "# Leaves") +
-  ylab(label = "% Cover") +
+  xlab(label = "Number of leaves") +
+  ylab(label = "Percent cover") +
   ggtitle(label = "Figure 2.1. % Lehmann cover by agave size") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
@@ -695,8 +705,8 @@ cover_pa_plot <- ggplot(data = cover_data_all,
   scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
                      labels = c("Control", "Hand-pulling", "Weed-eating")) +
   xlab(label = "Agave") +
-  ylab(label = "% Cover") +
-  ggtitle(label = "Figure 2.2. % Lehmann cover by agave presence") +
+  ylab(label = "Percent cover") +
+  ggtitle(label = "Figure 2.2. Percent Lehmann cover by agave presence") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(cover_pa_plot)
