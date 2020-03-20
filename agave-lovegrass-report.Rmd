@@ -12,19 +12,20 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.height = 3)
 suppressPackageStartupMessages(library(lme4))       # glmer logistic models
 suppressPackageStartupMessages(library(broom))      # Clean up stats tables
 suppressPackageStartupMessages(library(lmerTest))   # lme models
+suppressPackageStartupMessages(library(emmeans))    # post-hoc tests
 suppressPackageStartupMessages(library(dplyr))      # Data wrangling
 suppressPackageStartupMessages(library(ggplot2))    # Visualization
 suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
+loadfonts()
 ```
 
 ```{r}
 # TODO
-# 1. Apply post-hoc test to 1.1a and 1.2a with `lsmeans` package; see http://rcompanion.org/handbook/G_06.html.
+# 1. Apply post-hoc test to 1.1a and 1.2a with `emmeans` package; see https://cran.r-project.org/web/packages/emmeans/vignettes/comparisons.html.
 # 2. Consider adding asterisks to indicate significant differences (from control?)
 # 4. See if there is an easy way to add outliers to plots while using stat_summary instead of geom_boxplot
 # 5. Check explanations
 # 6. Fix p-values of 0.
-# 8. Add example of logistic regression explanation of coefficient estimates
 # 9. Update author info and add comments on MS
 ```
 
@@ -175,9 +176,8 @@ survive_text_counts <- merge(x = survivorship,
 boxplot_text <- "Boxplots show median (center line), 25th and 75th percentiles (lower and upper box boundaries, respectively), and 5th and 95th percentiles (lower and upper whisker, respectively)"
 ```
 
-```{r plot-survival, warning = FALSE}
-# A box plot with Treatment on x-axis, # live plants/plot on y; agave counts 
-# already calculated in calculate-counts-survivorship block, above
+```{r prep-survival, warning = FALSE}
+# Data wrangling for analysis and eventually plotting of survival data
 
 # Re-level so Control (C) is reference and treatments are plotted in desired 
 # order
@@ -192,22 +192,6 @@ boxplot_quantiles <- function(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95)) {
   names(q_vec) <- c("ymin", "lower", "middle", "upper", "ymax")
   return(q_vec)
 }
-
-agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
-  stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
-  xlab(label = "Treatment") +
-  ylab(label = "Number of live agaves") +
-  ggtitle(label = "Figure 1.1. Agave survival by treatment") +
-  geom_text(data = survive_text_counts,
-            label = survive_text_counts$mean_survivorship, # referring to bare column won't work
-            nudge_y = 0.6, # move labels above upper whisker
-            mapping = aes(x = Treatment, y = upper_whisker),
-            size = 4,
-            family = "Times New Roman") +
-  theme_bw() +
-  theme(text = element_text(family = "Times New Roman"))
-print(agave_count_plot)
-suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
 ```
 `r boxplot_text`
 
@@ -232,7 +216,8 @@ surv_single_summary <- summary(surv_single)
 surv_single_coeffs <- surv_single_summary$coefficients
 
 # Tidy up coefficients
-surv_single_coeffs <- tidy(surv_single_coeffs)
+surv_single_coeffs <- bind_cols(data.frame(rownames(surv_single_summary$coefficients)),
+                                data.frame(round(surv_single_coeffs, digits = 4)))
 
 # Update column names
 colnames(surv_single_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
@@ -255,17 +240,73 @@ if (any(surv_single_coeffs$p.value < 1e-5)) {
 }
 ```
 
+```{r survival-single-post-hoc}
+# Run Tukey post-hoc tests for pairwise comparisons
+surv_single_post_hoc <- emmeans(surv_single, 
+                                "Treatment", 
+                                adjust = "tukey")
+
+# Extract the pairwise contrasts table
+surv_single_contrasts <- as.data.frame(pairs(surv_single_post_hoc))
+
+# Only concerned with values relative to control treatment
+surv_single_contrasts <- surv_single_contrasts[substr(x = surv_single_contrasts$contrast, start = 1, stop = 3) == "C -", ]
+
+# And will only need to add asterisks where the post hoc tests were significant
+surv_single_contrasts <- surv_single_contrasts[surv_single_contrasts$p.value < 0.05, ]
+
+# Extract the name of the treatments that differ from the control; will use 
+# these to identify the corresponding level in the Treatment factor so we can 
+# find x-axis placement of the asterisk
+surv_single_diffs <- gsub(x = surv_single_contrasts$contrast,
+                          pattern = "C - ",
+                          replacement = "")
+
+# Will need to use survive_text_counts to get appropriate placement of 
+# asterisks in y dimension
+surv_single_asterisks <- survive_text_counts[survive_text_counts$Treatment %in% surv_single_diffs, ]
+surv_single_asterisks$text <- "*"
+```
+
+```{r plot-survival, warning = FALSE}
+# A box plot with Treatment on x-axis, # live plants/plot on y; agave counts 
+# already calculated in calculate-counts-survivorship block, above
+
+agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
+  stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
+  xlab(label = "Treatment") +
+  ylab(label = "Number of live agaves") +
+  ggtitle(label = "Figure 1.1. Agave survival by treatment") +
+  geom_text(data = survive_text_counts,
+            label = survive_text_counts$mean_survivorship, # referring to bare column won't work
+            nudge_y = 0.6, # move labels above upper whisker
+            mapping = aes(x = Treatment, y = upper_whisker),
+            size = 4,
+            family = "Times New Roman") +
+  geom_text(data = surv_single_asterisks,
+            label = surv_single_asterisks$text,
+            nudge_y = 0.1,
+            nudge_x = 0.1,
+            mapping = aes(x = Treatment, y = upper_whisker),
+            size = 5,
+            family = "Times New Roman") +
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
+print(agave_count_plot)
+suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
+```
+
 ##### Aside: interpreting logistic regression
 
 Interpreting the results of logistic regression in terms of probabilities requires examination of how the log-odds model works. We are primarily interested in the probability of survival for given values of $Treatment$, i.e. $p(Survival|Treatment)$. We can model this with the logistic function:
 
 $$
-p(Survival|Treatment) = {e^{\beta_{0} + \beta_{1}Treatment}\over 1 + e^{\beta_{0} + \beta_{1}Treatment}}
+p(Survival|Treatment) = \frac{e^{\beta_{0} + \beta_{1}Treatment}}{1 + e^{\beta_{0} + \beta_{1}Treatment}}
 $$
 
 However, the relationship between our variable of interest ($p(Survival)$) and the predictor ($Treatment$) is not linear. Using some algebraic rearranging, we arrive at the logit model:
 $$
-p(Survival|Treatment) = {e^{\beta_{0} + \beta_{1}Treatment}\over 1 + e^{\beta_{0} + \beta_{1}Treatment}}
+p(Survival|Treatment) = \frac{e^{\beta_{0} + \beta_{1}Treatment}}{1 + e^{\beta_{0} + \beta_{1}Treatment}}
 $$
 
 $$
@@ -285,12 +326,12 @@ p(Survival|Treatment) = e^{\beta_{0} + \beta_{1}Treatment} \times (1 - p(Surviva
 $$
 
 $$
-{p(Survival|Treatment) \over 1 - p(Survival|Treatment)} = e^{\beta_{0} + \beta_{1}Treatment}
+\frac{p(Survival|Treatment)}{1 - p(Survival|Treatment)} = e^{\beta_{0} + \beta_{1}Treatment}
 $$
 
 Finally, we take the natural logarithm of both sides to get:
 $$
-ln \left({p(Survival|Treatment) \over 1 - p(Survival|Treatment)}\right) = \beta_{0} + \beta_{1}Treatment
+ln \left(\frac{p(Survival|Treatment)}{1 - p(Survival|Treatment)}\right) = \beta_{0} + \beta_{1}Treatment
 $$
 
 Which is the familiar log-odds model from above:
@@ -301,7 +342,7 @@ $$
 So how do we interpret the $\beta$ coefficients from the model? For this model, let us compare the probability of survival in the Control treatment and the probability of survival in the hand-pulling treatment. We can use the original probability model, but because it is the control, we drop the $\beta_{1}Treatment$ terms because $Treatment$ in this case is zero.
 
 $$
-p(Survival|Treatment = Control) = {e^{\beta_{0}}\over 1 + e^{\beta_{0}}}
+p(Survival|Treatment = Control) = \frac{e^{\beta_{0}}}{1 + e^{\beta_{0}}}
 $$
 
 substituting in the value for $\beta_{0} = `r round(surv_single_coeffs[1, 2], digits = 3)`$,
@@ -312,7 +353,7 @@ b_1 <- round(surv_single_coeffs[2, 2], digits = 3)
 ```
 
 $$
-p(Survival|Treatment = Control) = {e^{`r b_0`}\over 1 + e^{`r b_0`}}
+p(Survival|Treatment = Control) = \frac{e^{`r b_0`}}{1 + e^{`r b_0`}}
 $$
 
 ```{r control-prob, echo = FALSE}
@@ -325,13 +366,13 @@ And the estimated probability for survival in the Control group is then `r p_c`.
 For the survival probability of the hand-pulling treatment, we start with the same probability model:
 
 $$
-p(Survival|Treatment = Hand-pulling) = {e^{\beta_{0} + \beta_{1}Treatment}\over 1 + e^{\beta_{0} + \beta_{1}Treatment}}
+p(Survival|Treatment = Hand-pulling) = \frac{e^{\beta_{0} + \beta_{1}Treatment}}{1 + e^{\beta_{0} + \beta_{1}Treatment}}
 $$
 
 Set $Treatment$ equal to 1 and use the coefficient estimate from the table above for $\beta_{1} = `r round(surv_single_coeffs[2, 2], digits = 3)`$:
 
 $$
-p(Survival|Treatment = Hand-pulling) = {e^{`r b_0` + `r b_1`}\over 1 + e^{`r b_0` + `r b_1`}}
+p(Survival|Treatment = Hand-pulling) = \frac{e^{`r b_0` + `r b_1`}}{1 + e^{`r b_0` + `r b_1`}}
 $$
 
 ```{r hand-pulling-prob, echo = FALSE}
@@ -365,8 +406,10 @@ surv_multi_summary <- summary(surv_multi)
 # Pull out the coefficients
 surv_multi_coeffs <- surv_multi_summary$coefficients
 
-# Tidy up coefficients
-surv_multi_coeffs <- tidy(surv_multi_coeffs)
+# Tidy up coefficients, some adjustments necessary given deprecation of 
+# tidy.matrix
+surv_multi_coeffs <- bind_cols(data.frame(rownames(surv_multi_coeffs)),
+                               data.frame(round(x = surv_multi_coeffs, digits = 4)))
 
 # Update column names
 colnames(surv_multi_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
@@ -389,7 +432,7 @@ knitr::kable(x = surv_multi_coeffs[, c(1, 2, 3, 5)],
 ```
 
 ```{r results = "asis"}
-if (any(surv_multi_coeffs$p.value < 1e-5)) {
+if (any(surv_multi_coeffs$p.value < 1e-6)) {
   cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
 }
 ```
@@ -418,7 +461,8 @@ surv_interact_summary <- summary(surv_interact)
 surv_interact_coeffs <- surv_interact_summary$coefficients
 
 # Tidy up coefficients
-surv_interact_coeffs <- tidy(surv_interact_coeffs)
+surv_interact_coeffs <- bind_cols(data.frame(rownames(surv_interact_coeffs)),
+                                  data.frame(round(x = surv_interact_coeffs, digits = 4)))
 
 # Update column names
 colnames(surv_interact_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
@@ -897,7 +941,10 @@ surv_single_cover_model <- update(surv_single_cover_model, start = ss)
 surv_single_cover_summary <- summary(surv_single_cover_model)
 
 surv_single_cover_coeffs <- surv_single_cover_summary$coefficients
-surv_single_cover_coeffs <- tidy(surv_single_cover_coeffs)
+
+# Tidy up coefficients
+surv_single_cover_coeffs <- bind_cols(data.frame(rownames(surv_single_cover_coeffs)),
+                                      data.frame(round(surv_single_cover_coeffs, digits = 4)))
 
 # Clean up column names
 colnames(surv_single_cover_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
@@ -947,7 +994,7 @@ size_single_cover_coeffs <- as.data.frame(size_single_cover_coeffs)
 
 # Add rownames as first column
 size_single_cover_coeffs <- cbind(Predictor = rownames(size_single_cover_coeffs), 
-                            size_single_cover_coeffs)
+                                  size_single_cover_coeffs)
 rownames(size_single_cover_coeffs) <- NULL
 
 # Update column names

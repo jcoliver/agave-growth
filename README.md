@@ -17,6 +17,8 @@ percent cover of Lehmann lovegrass?
 + lme4, glmer logistic models
 + broom, table formatting of statistical output
 + lmerTest, lme models
++ emmeans, post-hoc, pairwise comparisons
 + dplyr, data wrangling
 + ggplot2, data visualization
 + extrafont, extra fonts (right?)
+    + to avoid errors with `ggsave` will need to run `extrafont::font_import()`
