@@ -1,7 +1,7 @@
 ---
 title: "Palmer's Agave & Lehmann Lovegrass"
 author: "Jeff Oliver"
-date: "March 6, 2020"
+date: "March 25, 2020"
 output: 
   pdf_document: default
   word_document: default
@@ -16,16 +16,15 @@ suppressPackageStartupMessages(library(emmeans))    # post-hoc tests
 suppressPackageStartupMessages(library(dplyr))      # Data wrangling
 suppressPackageStartupMessages(library(ggplot2))    # Visualization
 suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
-loadfonts()
+# loadfonts()
 ```
 
 ```{r}
 # TODO
 # 1. Apply post-hoc test to 1.1a and 1.2a with `emmeans` package; see https://cran.r-project.org/web/packages/emmeans/vignettes/comparisons.html.
-# 2. Consider adding asterisks to indicate significant differences (from control?)
+# 2. Consider adding asterisks to indicate significant differences from control
 # 4. See if there is an easy way to add outliers to plots while using stat_summary instead of geom_boxplot
 # 5. Check explanations
-# 6. Fix p-values of 0.
 # 9. Update author info and add comments on MS
 ```
 
@@ -217,7 +216,7 @@ surv_single_coeffs <- surv_single_summary$coefficients
 
 # Tidy up coefficients
 surv_single_coeffs <- bind_cols(data.frame(rownames(surv_single_summary$coefficients)),
-                                data.frame(round(surv_single_coeffs, digits = 4)))
+                                data.frame(round(surv_single_coeffs, digits = 5)))
 
 # Update column names
 colnames(surv_single_coeffs) <- c("Predictor", "Estimate", "Std.Error", "z.value", "p.value")
@@ -227,17 +226,18 @@ surv_single_coeffs$Predictor <- gsub(pattern = "Treatment",
                                      replacement = "",
                                      x = surv_single_coeffs$Predictor)
 
+
+# Ensure small p-values are not shown as zero
+surv_single_coeffs$p.value <- as.character(ifelse(
+  test = surv_single_coeffs$p.value < 1e-5,
+  yes = signif(x = surv_single_coeffs$p.value, digits = 5),
+  no = round(x = surv_single_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = surv_single_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(surv_single_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 ```{r survival-single-post-hoc}
@@ -278,7 +278,8 @@ agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y =
   ylab(label = "Number of live agaves") +
   ggtitle(label = "Figure 1.1. Agave survival by treatment") +
   geom_text(data = survive_text_counts,
-            label = survive_text_counts$mean_survivorship, # referring to bare column won't work
+            # referring to bare column won't work for label
+            label = survive_text_counts$mean_survivorship, 
             nudge_y = 0.6, # move labels above upper whisker
             mapping = aes(x = Treatment, y = upper_whisker),
             size = 4,
@@ -424,17 +425,17 @@ surv_multi_coeffs$Predictor <- gsub(pattern = "_",
                                     replacement = " ",
                                     x = surv_multi_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+surv_multi_coeffs$p.value <- as.character(ifelse(
+  test = surv_multi_coeffs$p.value < 1e-5,
+  yes = signif(x = surv_multi_coeffs$p.value, digits = 5),
+  no = round(x = surv_multi_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = surv_multi_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(surv_multi_coeffs$p.value < 1e-6)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 #### 1.1.c Treatment as multiple predictors with interaction effects
@@ -482,17 +483,17 @@ surv_interact_coeffs$Predictor <- gsub(pattern = ":",
                                     replacement = " x ",
                                     x = surv_interact_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+surv_interact_coeffs$p.value <- as.character(ifelse(
+  test = surv_interact_coeffs$p.value < 1e-5,
+  yes = signif(x = surv_interact_coeffs$p.value, digits = 5),
+  no = round(x = surv_interact_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = surv_interact_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(surv_interact_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 ### 1.2. How does treatment affect agave size?
@@ -576,17 +577,17 @@ size_single_coeffs$Predictor <- gsub(pattern = "Treatment",
                                      replacement = "",
                                      x = size_single_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+size_single_coeffs$p.value <- as.character(ifelse(
+  test = size_single_coeffs$p.value < 1e-5,
+  yes = signif(x = size_single_coeffs$p.value, digits = 5),
+  no = round(x = size_single_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = size_single_coeffs[, c(1, 2, 3, 6)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(size_single_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 _Note_: There are several Plot by Treatment combinations with zero measurements for leaf count and at least one Treatment level (W) where there was a _single_ leaf count measurement. This could potentially influence this particular analysis.
@@ -632,17 +633,17 @@ size_multi_coeffs$Predictor <- gsub(pattern = "_",
                                      replacement = " ",
                                      x = size_multi_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+size_multi_coeffs$p.value <- as.character(ifelse(
+  test = size_multi_coeffs$p.value < 1e-5,
+  yes = signif(x = size_multi_coeffs$p.value, digits = 5),
+  no = round(x = size_multi_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = size_multi_coeffs[, c(1, 2, 3, 6)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(size_multi_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 #### 1.2.c Treatment as multiple predictors with interaction effects
@@ -693,17 +694,17 @@ size_interact_coeffs$Predictor <- gsub(pattern = ":",
                                      replacement = " x ",
                                      x = size_interact_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+size_interact_coeffs$p.value <- as.character(ifelse(
+  test = size_interact_coeffs$p.value < 1e-5,
+  yes = signif(x = size_interact_coeffs$p.value, digits = 5),
+  no = round(x = size_interact_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = size_interact_coeffs[, c(1, 2, 3, 6)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(size_interact_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 ## 2. How do the W and H treatments and agaves affect the percent of Lehmann cover?
@@ -798,6 +799,9 @@ cover_size_coeffs <- cbind(Predictor = rownames(cover_size_coeffs),
                       cover_size_coeffs)
 rownames(cover_size_coeffs) <- NULL
 
+# Update column names
+colnames(cover_size_coeffs) <- c("Predictor", "Estimate", "Std.Error", "t.value", "p.value")
+
 # Replace "Treatment" values
 cover_size_coeffs$Predictor <- gsub(pattern = "TreatmentH",
                                replacement = "Hand-pulling",
@@ -811,17 +815,17 @@ cover_size_coeffs$Predictor <- gsub(pattern = "live_leaf_number",
                                replacement = "Agave size",
                                x = cover_size_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+cover_size_coeffs$p.value <- as.character(ifelse(
+  test = cover_size_coeffs$p.value < 1e-5,
+  yes = signif(x = cover_size_coeffs$p.value, digits = 5),
+  no = round(x = cover_size_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = cover_size_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(cover_size_coeffs$`Pr(>|t|)` < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 _Note_: Similar to question 1.2, there are several H/W treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
@@ -889,6 +893,10 @@ cover_pa_coeffs <- cbind(Predictor = rownames(cover_pa_coeffs),
                       cover_pa_coeffs)
 rownames(cover_pa_coeffs) <- NULL
 
+# Update column names
+colnames(cover_pa_coeffs) <- c("Predictor", "Estimate", "Std.Error", "df", 
+                               "t.value", "p.value")
+
 # Replace "Treatment" values
 cover_pa_coeffs$Predictor <- gsub(pattern = "TreatmentH",
                                replacement = "Hand-pulling",
@@ -902,17 +910,17 @@ cover_pa_coeffs$Predictor <- gsub(pattern = "Status1",
                                replacement = "Agave presence",
                                x = cover_pa_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+cover_pa_coeffs$p.value <- as.character(ifelse(
+  test = cover_pa_coeffs$p.value < 1e-5,
+  yes = signif(x = cover_pa_coeffs$p.value, digits = 5),
+  no = round(x = cover_pa_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = cover_pa_coeffs[, c(1, 2, 3, 6)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(cover_pa_coeffs$`Pr(>|t|)` < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 ## 3. How does percent cover affect survival and size of agaves?
@@ -959,17 +967,17 @@ surv_single_cover_coeffs$Predictor <- gsub(pattern = "areial_cover",
                                            replacement = "% Cover Lehman lovegrass",
                                            x = surv_single_cover_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+surv_single_cover_coeffs$p.value <- as.character(ifelse(
+  test = surv_single_cover_coeffs$p.value < 1e-5,
+  yes = signif(x = surv_single_cover_coeffs$p.value, digits = 5),
+  no = round(x = surv_single_cover_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = surv_single_cover_coeffs[, c(1, 2, 3, 5)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(surv_single_cover_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
 
 ### 3.2 How does percent cover affect agave size?
@@ -1010,15 +1018,15 @@ size_single_cover_coeffs$Predictor <- gsub(pattern = "areial_cover",
                                            replacement = "% Cover Lehman lovegrass",
                                            x = size_single_cover_coeffs$Predictor)
 
+# Ensure small p-values are not shown as zero
+size_single_cover_coeffs$p.value <- as.character(ifelse(
+  test = size_single_cover_coeffs$p.value < 1e-5,
+  yes = signif(x = size_single_cover_coeffs$p.value, digits = 5),
+  no = round(x = size_single_cover_coeffs$p.value, digits = 5)))
+
 knitr::kable(x = size_single_cover_coeffs[, c(1, 2, 3, 6)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
-```
-
-```{r results = "asis"}
-if (any(size_single_cover_coeffs$p.value < 1e-5)) {
-  cat("\n_Note_: P-values reported as 0 are artifacts of rounding; they are not truly zero.")
-}
 ```
