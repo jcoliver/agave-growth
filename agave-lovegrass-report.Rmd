@@ -21,8 +21,10 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 
 ```{r}
 # TODO
-# 4. See if there is an easy way to add outliers to plots while using stat_summary instead of geom_boxplot
-# 9. Update author info and add comments on MS
+# 4. See if there is an easy way to add outliers to plots while using 
+# stat_summary instead of geom_boxplot; it can be done, but requires re-thinking 
+# of how to add survivorship values. Code is included but commented out. Search
+# for boxplot_outliers
 ```
 
 # Summary
@@ -191,6 +193,17 @@ boxplot_quantiles <- function(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95)) {
   names(q_vec) <- c("ymin", "lower", "middle", "upper", "ymax")
   return(q_vec)
 }
+
+# Function for adding outliers to boxplots; using stat_summary with the 
+# boxplot_quantiles function (above) will not plot outliers, so we subset those
+# data in a separate geom
+# See https://stackoverflow.com/questions/35274849/error-in-stat-summaryfun-y-when-plotting-outliers-in-a-modified-ggplot-boxplot
+boxplot_outliers <- function(x, limits = c(0.05, 0.95)) {
+  outliers <- subset(x = x,
+                     x < quantile(x = x, probs = limits[1]) | 
+                       x > quantile(x = x, probs = limits[2]))
+  return(outliers)
+}
 ```
 
 #### 1.1.a Treatment as a single predictor
@@ -294,6 +307,7 @@ if (nrow(surv_single_contrasts) > 0) {
 
 agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
+  # stat_summary(fun.y = boxplot_outliers, geom = "point") +
   labs(title = "Figure 1.1. Agave survival by treatment",
        x = "Treatment",
        y = "Number of live agaves") +
@@ -548,7 +562,6 @@ agave_sizes$Treatment <- factor(agave_sizes$Treatment,
                                  levels = c("C", "J", "J+S", "J+H", "J+W",
                                             "S", "S+H", "S+W", "H", "W"))
 ```
-`r boxplot_text`
 
 #### 1.2.a Treatment as a single predictor
 
@@ -655,6 +668,7 @@ if (nrow(size_single_contrasts) > 0) {
 agave_size_plot <- ggplot(data = agave_sizes, 
                             mapping = aes(x = Treatment, y = live_leaf_number)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
+  # stat_summary(fun.y = boxplot_outliers, geom = "point") +
   labs(title = "Figure 1.2. Agave size by treatment",
        subtitle = "Numbers in plot show mean survivorship for treatment",
        x = "Treatment",
