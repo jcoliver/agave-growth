@@ -21,10 +21,7 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 
 ```{r}
 # TODO
-# 1. Apply post-hoc test to 1.1a and 1.2a with `emmeans` package; see https://cran.r-project.org/web/packages/emmeans/vignettes/comparisons.html.
-# 2. Consider adding asterisks to indicate significant differences from control
 # 4. See if there is an easy way to add outliers to plots while using stat_summary instead of geom_boxplot
-# 5. Check explanations
 # 9. Update author info and add comments on MS
 ```
 
@@ -173,6 +170,9 @@ survive_text_counts <- merge(x = survivorship,
 
 # Text to print under each boxplot, indicating what the whiskers mean
 boxplot_text <- "Boxplots show median (center line), 25th and 75th percentiles (lower and upper box boundaries, respectively), and 5th and 95th percentiles (lower and upper whisker, respectively)"
+
+# Text to print under boxplot, indicating what the asterisks mean
+asterisk_text <- "Asterisks indicate treatments that had a significantly different effect from the Control treatment in Tukey _post-hoc_ tests."
 ```
 
 ```{r prep-survival, warning = FALSE}
@@ -192,7 +192,6 @@ boxplot_quantiles <- function(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95)) {
   return(q_vec)
 }
 ```
-`r boxplot_text`
 
 #### 1.1.a Treatment as a single predictor
 
@@ -226,7 +225,6 @@ surv_single_coeffs$Predictor <- gsub(pattern = "Treatment",
                                      replacement = "",
                                      x = surv_single_coeffs$Predictor)
 
-
 # Ensure small p-values are not shown as zero
 surv_single_coeffs$p.value <- as.character(ifelse(
   test = surv_single_coeffs$p.value < 1e-5,
@@ -252,31 +250,53 @@ surv_single_contrasts <- as.data.frame(pairs(surv_single_post_hoc))
 # Only concerned with values relative to control treatment
 surv_single_contrasts <- surv_single_contrasts[substr(x = surv_single_contrasts$contrast, start = 1, stop = 3) == "C -", ]
 
+# Make a nice format for printing before reducing to only significant effects
+surv_single_contrasts_print <- surv_single_contrasts
+surv_single_contrasts_print$contrast <- gsub(x = surv_single_contrasts_print$contrast,
+                                             pattern = "C - ",
+                                             replacement = "")
+
 # And will only need to add asterisks where the post hoc tests were significant
 surv_single_contrasts <- surv_single_contrasts[surv_single_contrasts$p.value < 0.05, ]
 
-# Extract the name of the treatments that differ from the control; will use 
-# these to identify the corresponding level in the Treatment factor so we can 
-# find x-axis placement of the asterisk
-surv_single_diffs <- gsub(x = surv_single_contrasts$contrast,
-                          pattern = "C - ",
-                          replacement = "")
+if (nrow(surv_single_contrasts) > 0) {
+  # Extract the name of the treatments that differ from the control; will use 
+  # these to identify the corresponding level in the Treatment factor so we can 
+  # find x-axis placement of the asterisk
+  surv_single_diffs <- gsub(x = surv_single_contrasts$contrast,
+                            pattern = "C - ",
+                            replacement = "")
+  
+  # Will need to use survive_text_counts to get appropriate placement of 
+  # asterisks in y dimension
+  surv_single_asterisks <- survive_text_counts[survive_text_counts$Treatment %in% surv_single_diffs, ]
+  surv_single_asterisks$text <- "*"
+}
+```
 
-# Will need to use survive_text_counts to get appropriate placement of 
-# asterisks in y dimension
-surv_single_asterisks <- survive_text_counts[survive_text_counts$Treatment %in% surv_single_diffs, ]
-surv_single_asterisks$text <- "*"
+_Post-hoc_ comparisons among treatments, showing results of Tukey test for significant differences from the Control treatment:
+
+```{r surv-single-post-hoc-table}
+knitr::kable(x = surv_single_contrasts_print[, c(1, 5, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "t value", "P-value"))
 ```
 
 ```{r plot-survival, warning = FALSE}
 # A box plot with Treatment on x-axis, # live plants/plot on y; agave counts 
 # already calculated in calculate-counts-survivorship block, above
+count_caption <- boxplot_text
+if (nrow(surv_single_contrasts) > 0) {
+  count_caption <- paste0(count_caption, " ", asterisk_text)
+}
 
 agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
-  xlab(label = "Treatment") +
-  ylab(label = "Number of live agaves") +
-  ggtitle(label = "Figure 1.1. Agave survival by treatment") +
+  labs(title = "Figure 1.1. Agave survival by treatment",
+       x = "Treatment",
+       y = "Number of live agaves") +
   geom_text(data = survive_text_counts,
             # referring to bare column won't work for label
             label = survive_text_counts$mean_survivorship, 
@@ -284,18 +304,24 @@ agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y =
             mapping = aes(x = Treatment, y = upper_whisker),
             size = 4,
             family = "Times New Roman") +
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
+
+# Only add asterisks if there are some
+if (nrow(surv_single_contrasts) > 0) {
+  agave_count_plot <- agave_count_plot +
   geom_text(data = surv_single_asterisks,
             label = surv_single_asterisks$text,
             nudge_y = 0.1,
             nudge_x = 0.1,
             mapping = aes(x = Treatment, y = upper_whisker),
             size = 5,
-            family = "Times New Roman") +
-  theme_bw() +
-  theme(text = element_text(family = "Times New Roman"))
+            family = "Times New Roman")
+}
 print(agave_count_plot)
 suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
 ```
+`r count_caption`
 
 ##### Aside: interpreting logistic regression
 
@@ -500,7 +526,7 @@ knitr::kable(x = surv_interact_coeffs[, c(1, 2, 3, 5)],
 
 In this section, individual agave sizes (measured by number of leaves) is a continuous response variable in linear regression mixed-effects models. The data are restricted to cases where there was a live agave (N = `r nrow(live_agave_data)`). Furthermore, only measurements for a maximum of three agaves per row were used in analyses.
 
-```{r plot-size, warning = FALSE}
+```{r prepare-size, warning = FALSE}
 # Want a box plot with Treatment on x-axis, # leaves on y
 agave_sizes <- live_agave_data %>%
   select(Treatment, live_leaf_number)
@@ -521,24 +547,6 @@ survive_text_size <- merge(x = survivorship,
 agave_sizes$Treatment <- factor(agave_sizes$Treatment,
                                  levels = c("C", "J", "J+S", "J+H", "J+W",
                                             "S", "S+H", "S+W", "H", "W"))
-
-agave_size_plot <- ggplot(data = agave_sizes, 
-                            mapping = aes(x = Treatment, y = live_leaf_number)) +
-  stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
-  labs(title = "Figure 1.2. Agave size by treatment",
-       subtitle = "Numbers in plot show mean survivorship for treatment",
-       x = "Treatment",
-       y = "Number of leaves") +
-  geom_text(data = survive_text_size,
-            label = survive_text_size$mean_survivorship, # referring to bare column won't work
-            nudge_y = 0.7, # move labels above upper whisker
-            mapping = aes(x = Treatment, y = upper_whisker),
-            size = 4,
-            family = "Times New Roman") +
-  theme_bw() +
-  theme(text = element_text(family = "Times New Roman"))
-print(agave_size_plot)
-suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
 ```
 `r boxplot_text`
 
@@ -591,6 +599,90 @@ knitr::kable(x = size_single_coeffs[, c(1, 2, 3, 6)],
 ```
 
 _Note_: There are several Plot by Treatment combinations with zero measurements for leaf count and at least one Treatment level (W) where there was a _single_ leaf count measurement. This could potentially influence this particular analysis.
+
+```{r size-single-post-hoc}
+# Run Tukey post-hoc tests for pairwise comparisons
+size_single_post_hoc <- emmeans(size_single_model, 
+                                "Treatment", 
+                                adjust = "tukey")
+
+# Extract the pairwise contrasts table
+size_single_contrasts <- as.data.frame(pairs(size_single_post_hoc))
+
+# Only concerned with values relative to control treatment
+size_single_contrasts <- size_single_contrasts[substr(x = size_single_contrasts$contrast, start = 1, stop = 3) == "C -", ]
+
+# Make a nice format for printing before reducing to only significant effects
+size_single_contrasts_print <- size_single_contrasts
+size_single_contrasts_print$contrast <- gsub(x = size_single_contrasts_print$contrast,
+                                             pattern = "C - ",
+                                             replacement = "")
+
+# And will only need to add asterisks where the post hoc tests were significant
+size_single_contrasts <- size_single_contrasts[size_single_contrasts$p.value < 0.05, ]
+
+if (nrow(size_single_contrasts) > 0) {
+  # Extract the name of the treatments that differ from the control; will use 
+  # these to identify the corresponding level in the Treatment factor so we can 
+  # find x-axis placement of the asterisk
+  size_single_diffs <- gsub(x = size_single_contrasts$contrast,
+                            pattern = "C - ",
+                            replacement = "")
+  
+  # Will need to use survive_text_size to get appropriate placement of asterisks 
+  # in y dimension
+  size_single_asterisks <- survive_text_size[survive_text_size$Treatment %in% size_single_diffs, ]
+  size_single_asterisks$text <- "*"
+}
+```
+
+_Post-hoc_ comparisons among treatments, showing results of Tukey test for significant differences from the Control treatment:
+
+```{r size-single-post-hoc-table}
+knitr::kable(x = size_single_contrasts_print[, c(1, 5, 6)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "t value", "P-value"))
+```
+
+```{r plot-size, warning = FALSE}
+size_caption <- boxplot_text
+if (nrow(size_single_contrasts) > 0) {
+  size_caption <- paste0(size_caption, " ", asterisk_text)
+}
+
+agave_size_plot <- ggplot(data = agave_sizes, 
+                            mapping = aes(x = Treatment, y = live_leaf_number)) +
+  stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
+  labs(title = "Figure 1.2. Agave size by treatment",
+       subtitle = "Numbers in plot show mean survivorship for treatment",
+       x = "Treatment",
+       y = "Number of leaves") +
+  geom_text(data = survive_text_size,
+            label = survive_text_size$mean_survivorship, # referring to bare column won't work
+            nudge_y = 0.7, # move labels above upper whisker
+            mapping = aes(x = Treatment, y = upper_whisker),
+            size = 4,
+            family = "Times New Roman") +
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
+
+# Only add asterisks if there were significant post-hoc differences
+if (nrow(size_single_contrasts) > 0) {
+  agave_size_plot <- agave_size_plot + 
+    geom_text(data = size_single_asterisks,
+              label = size_single_asterisks$text,
+              nudge_y = 0.1,
+              nudge_x = 0.1,
+              mapping = aes(x = Treatment, y = upper_whisker),
+              size = 5,
+              family = "Times New Roman")
+}
+print(agave_size_plot)
+suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
+```
+`r size_caption`
 
 #### 1.2.b Treatment as multiple predictors
 
@@ -849,6 +941,8 @@ cover_data_all$agave <- "Present"
 cover_data_all$agave[cover_data_all$Status == 0] <- "Absent"
 cover_data_all$agave <- factor(x = cover_data_all$agave)
 
+cover_pa_caption <- boxplot_text
+
 cover_pa_plot <- ggplot(data = cover_data_all, 
                           mapping = aes(x = agave, y = areial_cover,
                                         fill = Treatment)) +
@@ -856,18 +950,17 @@ cover_pa_plot <- ggplot(data = cover_data_all,
                geom = "boxplot",
                position = position_dodge(width = 0.7),
                width = 0.5) +
-  # geom_boxplot() +
   scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
                      labels = c("Control", "Hand-pulling", "Weed-eating")) +
-  xlab(label = "Agave") +
-  ylab(label = "Percent cover") +
-  ggtitle(label = "Figure 2.2. Percent Lehmann cover by agave presence") +
+  labs(x = "Agave",
+       y = "Percent cover",
+       title = "Figure 2.2. Percent Lehmann cover by agave presence") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(cover_pa_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-pa-plot.pdf", plot = cover_pa_plot))
 ```
-`r boxplot_text`
+`r cover_pa_caption`
 
 We use a mixed-effect model:
 
