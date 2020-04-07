@@ -107,7 +107,7 @@ knitr::kable(x = agave_summary,
 
 The two response variables are:
 
-1. The total number of live plants in a row (all those not marked as dead or predated)
+1. Survival of individual agave plants
 2. The number of leaves on agave plants; the number of agaves measured varies among plot/treatment combinations
 
 The inclusion of treatment in the models can be done in two different ways:
@@ -391,6 +391,7 @@ substituting in the value for $\beta_{0} = `r round(surv_single_coeffs[1, 2], di
 ```{r extract-surv-betas, echo = FALSE}
 b_0 <- round(surv_single_coeffs[1, 2], digits = 3)
 b_1 <- round(surv_single_coeffs[2, 2], digits = 3)
+b_2 <- round(surv_single_coeffs[5, 2], digits = 3)
 ```
 
 $$
@@ -425,7 +426,21 @@ And the estimated probability for survival in the Hand-pulling treatment is then
 
 Finally, we can compare the two by calculating the difference in probabilities, `r p_h` - `r p_c` = `r p_h - p_c`.
 
-Note the explanation above does not discuss random effects of plot. So when reporting these values, it is best to say that this is the _average_ effect of treatment on survival.
+We can consider a similar comparison, between the Control treatment and the Javalina exclusion and shade treatment ("J + S"):
+
+$$
+p(Survival|Treatment = Javalina + Shade) = \frac{e^{`r b_0` + `r b_2`}}{1 + e^{`r b_0` + `r b_2`}}
+$$
+
+```{r j-plus-s-prob, echo = FALSE}
+p_js <- exp(x = (surv_single_coeffs[1, 2] + surv_single_coeffs[5, 2])) / (1 + exp(x = surv_single_coeffs[1, 2] + surv_single_coeffs[5, 2]))
+p_js <- round(p_js, digits = 3)
+```
+
+So the estimated probability of survival in the J + S treatment is `r p_js` and the difference in survival probability from the Control treatment is `r p_js` - `r p_c` = `r p_js - p_c`.
+
+
+Note the explanations above do not discuss random effects of plot. So when reporting these values, it is best to say that this is the _average_ effect of treatment on survival.
 
 #### 1.1.b Treatment as multiple predictors
 
