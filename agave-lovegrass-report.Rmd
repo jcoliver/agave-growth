@@ -21,10 +21,18 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 
 ```{r}
 # TODO
-# 4. See if there is an easy way to add outliers to plots while using 
-# stat_summary instead of geom_boxplot; it can be done, but requires re-thinking 
-# of how to add survivorship values. Code is included but commented out. Search
-# for boxplot_outliers
+# 1. Create Excel sheet for the calculation of difference in survival 
+#    probability relative to the control.
+# 2. Take survivorship numbers off of the Agave size plot (1.2a)
+# 3. Add median # leaves per treatment table
+# 4. Add post-hoc for 2.1
+# 5. Remove weed-eating from 2.1
+# 6. Try 2.1 model without any treatments other than Control
+# 7. Add interpretation for linear regression coefficients. Namely, what does a
+#    coefficient in # Leaves model tell us? Intercept is the control treatment, 
+#    coefficient estimates are difference in number of leaves from control.
+# 8. Also add note about Tukey correcting for multiple tests, which also 
+#    contributes to the increase in p-values.
 ```
 
 # Summary
