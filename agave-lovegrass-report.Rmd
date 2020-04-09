@@ -22,15 +22,6 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 ```{r}
 # TODO
 # 3. Add median # leaves per treatment table SKIP?
-# 4. Add post-hoc for 2.1
-# 6. Try 2.1 model without any treatments other than Control
-# 7. Do 2.1 with an interaction effect between treatment and agave size
-
-# From A. Gill:
-# 1) Post-hoc test for both the Lehmann lovegrass analyses. 
-# 4) Including two more analysis/figures for the Lehmann competition with 
-# agaves (with just the control treatment and no weed control treatment) 
-
 ```
 
 # Summary
@@ -313,6 +304,14 @@ knitr::kable(x = surv_single_contrasts_print[, c(1, 5, 6)],
 ```
 
 _Note_: The p-values from Tukey _post-hoc_ tests will *always* be higher than p-value from the initial model. This is because the _post-hoc_ test is correcting for the fact that we are making many pairwise comparisons (we have to compare each treatment to every other treatment), and the chance that we encounter a false positive (inferring significance where the low p-value is due to chance alone) is increasing. In this case, there are `r (nrow(surv_single_coeffs) * (nrow(surv_single_coeffs) - 1)) / 2` total pairwise comparisons.
+
+*UPDATE*: If the interest is _only_ comparing treatments to the Control, _post-hoc_ tests seem unnecessary. This is because, in the regression models, we are treating the Control as the "reference" category, and estimating coefficients for all treatments other than the Control (sort of; in reality, the Control treatment is effectively represented in the model by the intercept, $\beta_0$). In the table presenting the coefficient estimates, the p-value column indicates whether or not the estimate is significantly different from zero. In those cases where the estimate _is_ significantly different from zero (p < 0.05), it means the Treatment of interest had an effect significantly different from the reference category, which in this case is the control.
+
+
+So.
+
+
+As long as you are _only_ interested in comparing treatments to the Control, and not to one another, _post-hoc_ tests are not necessary. If, however, you want to know if Hand-pulling was significantly different from Shade, then _post-hoc_ tests are necessary.
 
 ```{r plot-survival, warning = FALSE}
 # A box plot with Treatment on x-axis, # live plants/plot on y; agave counts 
@@ -743,7 +742,7 @@ agave_size_plot <- ggplot(data = agave_sizes,
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
   # stat_summary(fun.y = boxplot_outliers, geom = "point") +
   labs(title = "Figure 1.2. Agave size by treatment",
-       subtitle = "Numbers in plot show mean survivorship for treatment",
+  #     subtitle = "Numbers in plot show mean survivorship for treatment",
        x = "Treatment",
        y = "Number of leaves") +
   # geom_text(data = survive_text_size,
@@ -886,7 +885,7 @@ knitr::kable(x = size_interact_coeffs[, c(1, 2, 3, 6)],
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
 
-## 2. How do the W and H treatments and agaves affect the percent of Lehmann cover?
+## 2. How do mechanical removal and agaves affect the percent of Lehmann cover?
 
 In these analyses, the effect of agaves is modeled in two ways:
 
@@ -895,7 +894,7 @@ In these analyses, the effect of agaves is modeled in two ways:
 
 _Note_ in these analyses (Section 2), only treatments W and H _sensu stricto_ were considered. That is, data from rows with treatments J+H, J+W, S+H, and S+W are not included in plots & analyses.
 
-### 2.1 How do selected treatments and agave size affect percent cover?
+### 2.1.a How do selected treatments and agave size affect percent cover?
 
 ```{r cover-data-live-prep, warning = FALSE}
 # Need to reduce data to only treatments C and H
@@ -917,7 +916,7 @@ cover_size_coeffs <- cover_size_summary$coefficients
 cover_size_coeffs <- as.data.frame(cover_size_coeffs)
 ```
 
-Here we are interested to know how certain treatments and the _size_ of the agave plants affect the percent cover of Lehman lovegrass (N = `r nrow(cover_data_live)`). 
+Here we are interested to know how certain treatments and the _size_ of the agave plants affect the percent cover of Lehman lovegrass. We are interested in both the Hand-pulling and Weed-eating treatments, but since there was only a single observation of a live agave in the Weed-eating treatments, only Control and Hand-pulling treatments are considered in 2.1.a (N = `r nrow(cover_data_live)`).
 
 ```{r plot-cover-size}
 # control_model <- B0 + B2 * live_leaf_number
@@ -929,14 +928,13 @@ control_limits <- c(min(cover_data_live$live_leaf_number[cover_data_live$Treatme
 control_line <- data.frame(Treatment = "C",
                               live_leaf_number = control_limits)
 control_line$areial_cover <- predict(cover_size_model, newdata = control_line)
-rm(control_limits)
+
 # For Hand-pulling treatment
 hand_pulling_limits <- c(min(cover_data_live$live_leaf_number[cover_data_live$Treatment == "H"]),
                          max(cover_data_live$live_leaf_number[cover_data_live$Treatment == "H"]))
 hand_pulling_line <- data.frame(Treatment = "H",
                                    live_leaf_number = hand_pulling_limits)
 hand_pulling_line$areial_cover <- predict(cover_size_model, newdata = hand_pulling_line)
-rm(hand_pulling_limits)
 
 cover_size_plot <- ggplot(data = cover_data_live, 
                           mapping = aes(x = live_leaf_number, y = areial_cover,
@@ -951,7 +949,7 @@ cover_size_plot <- ggplot(data = cover_data_live,
                      labels = c("Control", "Hand-pulling")) +
   xlab(label = "Number of leaves") +
   ylab(label = "Percent cover") +
-  ggtitle(label = "Figure 2.1. Percent Lehmann cover by agave size") +
+  ggtitle(label = "Figure 2.1.a. Percent Lehmann cover by agave size") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(cover_size_plot)
@@ -1006,43 +1004,96 @@ knitr::kable(x = cover_size_coeffs[, c(1, 2, 3, 5)],
 
 _Note_: Similar to question 1.2, there are several H treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
 
-#### 2.1.b How does agave size in control treatments effect percent cover?
-This analysis is identical to the one in 2.1, above, but includes only plants from the Control treatment.
+#### 2.1.b How does agave size effect percent cover when treatment interacts with size?
+This analysis is identical to the one in 2.1.a, above, but allows the relationship between the percent cover and the size of agaves to differ among treatments. That is, the previous model included only treatment and agave size:
 
-```{r control-cover-size}
-control_data_live <- cover_data_live[cover_data_live$Treatment == "C", ]
-control_size_model <- lm(formula = areial_cover ~ live_leaf_number, data = control_data_live)
-control_size_summary <- summary(control_size_model)
+$$
+\% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves
+$$
 
-control_size_coeffs <- control_size_summary$coefficients
+This model affords each treatment a different intercept in the relationship between percent cover and agave size; however, if we want to allow a model with different slopes among treatments, the formula would be:
 
-# Coerce to a data frame
-control_size_coeffs <- as.data.frame(control_size_coeffs)
+$$
+\% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves + \beta_3 \times Treatment \times \# Leaves
+$$
 
-# Predict the line of the relationship
-control_limits <- c(min(control_data_live$live_leaf_number),
-                    max(control_data_live$live_leaf_number))
-control_line <- data.frame(Treatment = "C",
-                              live_leaf_number = control_limits)
-control_line$areial_cover <- predict(control_size_model, newdata = control_line)
-rm(control_limits)
+```{r cover-analysis-interaction}
+# Run cover model, with interaction between Treatment and size
+cover_interaction_model <- lm(formula = areial_cover ~ Treatment * live_leaf_number, data = cover_data_live)
+cover_interaction_summary <- summary(cover_interaction_model)
+cover_interaction_coeffs <- cover_interaction_summary$coefficients
+cover_interaction_coeffs <- as.data.frame(cover_interaction_coeffs)
 
-# Plot the data
-control_size_plot <- ggplot(data = control_data_live, 
-                          mapping = aes(x = live_leaf_number, y = areial_cover)) +
-  geom_line(data = control_line, color = "#787878") +
-  geom_point(size = 2.0, alpha = 0.75, fill = "#787878") +
-  xlab(label = "Number of leaves") +
-  ylab(label = "Percent cover") +
-  ggtitle(label = "Figure 2.1. Percent Lehmann cover by agave size in Control Treatment") +
-  theme_bw() +
-  theme(text = element_text(family = "Times New Roman"))
-print(control_size_plot)
-suppressMessages(expr = ggsave(filename = "output/control-size-plot.pdf", plot = cover_size_plot))
+# Move Treatments from row names into column
+cover_interaction_coeffs <- cbind(Predictor = rownames(cover_interaction_coeffs),
+                                  cover_interaction_coeffs)
+rownames(cover_interaction_coeffs) <- NULL
+
+# Update column names
+colnames(cover_interaction_coeffs) <- c("Predictor", "Estimate", "Std.Error", "t.value", "p.value")
+
+# Replace "Treatment" values
+cover_interaction_coeffs$Predictor <- gsub(pattern = "TreatmentH",
+                                           replacement = "Hand-pulling",
+                                           x = cover_interaction_coeffs$Predictor)
+
+# Replace live_leave_number with human-readable version
+cover_interaction_coeffs$Predictor <- gsub(pattern = "live_leaf_number",
+                                           replacement = "Agave size",
+                                           x = cover_interaction_coeffs$Predictor)
+
+# Ensure small p-values are not shown as zero
+cover_interaction_coeffs$p.value <- as.character(ifelse(
+  test = cover_interaction_coeffs$p.value < 1e-5,
+  yes = signif(x = cover_interaction_coeffs$p.value, digits = 5),
+  no = round(x = cover_interaction_coeffs$p.value, digits = 5)))
+
+knitr::kable(x = cover_interaction_coeffs[, c(1, 2, 3, 5)], 
+             format = "markdown",
+             row.names = FALSE,
+             digits = 5,
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 
 ```
 
+```{r cover-model-comparison}
+# Is this model better than the additive alone model?
+model_compare <- anova(cover_size_model, cover_interaction_model)
+```
 
+We should compare the performance of this model with the simpler model, which did not include an interaction term. The more complex model has one additional parameter ($\beta_3$, the interaction coefficient) and _is_ significantly better than the simple model (F = `r round(model_compare$F[2], digits = 3)`, p = `r round(model_compare[2, "Pr(>F)"], digits = 3)`). So we can be confident that the more complex model is a better fit and should be used for interpretation. Also because we have reduced treatment to only two levels (Control and Hand-pulling), _post-hoc_ tests are unnecessary.
+
+```{r cover-plot-interaction}
+# Plot the model results
+# Predict lines of relationships
+control_line <- data.frame(Treatment = "C",
+                              live_leaf_number = control_limits)
+control_line$areial_cover <- predict(cover_interaction_model, newdata = control_line)
+
+hand_pulling_line <- data.frame(Treatment = "H",
+                                   live_leaf_number = hand_pulling_limits)
+hand_pulling_line$areial_cover <- predict(cover_size_model, newdata = hand_pulling_line)
+
+# Plot the data
+cover_interaction_plot <- ggplot(data = cover_data_live, 
+                          mapping = aes(x = live_leaf_number, y = areial_cover,
+                                        group = Treatment, fill = Treatment,
+                                        shape = Treatment)) +
+  geom_line(data = control_line, color = "#787878") +
+  geom_line(data = hand_pulling_line, color = "#D8B365") +
+  geom_point(size = 2.0, alpha = 0.75) +
+  scale_fill_manual(values = c("#787878", "#D8B365"),
+                    labels = c("Control", "Hand-pulling")) +
+  scale_shape_manual(values = c(21, 22), # Circle, square
+                     labels = c("Control", "Hand-pulling")) +
+  xlab(label = "Number of leaves") +
+  ylab(label = "Percent cover") +
+  ggtitle(label = "Figure 2.1.b. Percent Lehmann cover by agave size") +
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
+print(cover_interaction_plot)
+suppressMessages(expr = ggsave(filename = "output/cover-interaction-plot.pdf", plot = cover_interaction_plot))
+```
 
 
 ### 2.2 How do selected treatments and the presence of a live agave affect percent cover?
