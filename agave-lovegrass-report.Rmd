@@ -21,18 +21,16 @@ suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 
 ```{r}
 # TODO
-# 1. Create Excel sheet for the calculation of difference in survival 
-#    probability relative to the control.
-# 2. Take survivorship numbers off of the Agave size plot (1.2a)
-# 3. Add median # leaves per treatment table
+# 3. Add median # leaves per treatment table SKIP?
 # 4. Add post-hoc for 2.1
-# 5. Remove weed-eating from 2.1
 # 6. Try 2.1 model without any treatments other than Control
-# 7. Add interpretation for linear regression coefficients. Namely, what does a
-#    coefficient in # Leaves model tell us? Intercept is the control treatment, 
-#    coefficient estimates are difference in number of leaves from control.
-# 8. Also add note about Tukey correcting for multiple tests, which also 
-#    contributes to the increase in p-values.
+# 7. Do 2.1 with an interaction effect between treatment and agave size
+
+# From A. Gill:
+# 1) Post-hoc test for both the Lehmann lovegrass analyses. 
+# 4) Including two more analysis/figures for the Lehmann competition with 
+# agaves (with just the control treatment and no weed control treatment) 
+
 ```
 
 # Summary
@@ -252,12 +250,21 @@ surv_single_coeffs$p.value <- as.character(ifelse(
   yes = signif(x = surv_single_coeffs$p.value, digits = 5),
   no = round(x = surv_single_coeffs$p.value, digits = 5)))
 
-knitr::kable(x = surv_single_coeffs[, c(1, 2, 3, 5)], 
+# Calculate probabilities for each of the treatments
+# Create vector of all beta 1 coeffs; it is zero for control (ref) treatment
+b_1 <- c(0, surv_single_coeffs[2:nrow(surv_single_coeffs), 2])
+# e^(b0 + b1)
+exp_sums <- exp(surv_single_coeffs[1, 2] + b_1)
+surv_single_coeffs$probs <- exp_sums / (1 + exp_sums)
+
+knitr::kable(x = surv_single_coeffs[, c(1, 2, 3, 5, 6)], 
              format = "markdown",
              row.names = FALSE,
              digits = 5,
-             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+             col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value", "Survival Probability"))
 ```
+
+In this table, the row listed as $(Intercept)$ represents the Control treatment.
 
 ```{r survival-single-post-hoc}
 # Run Tukey post-hoc tests for pairwise comparisons
@@ -304,6 +311,8 @@ knitr::kable(x = surv_single_contrasts_print[, c(1, 5, 6)],
              digits = 5,
              col.names = c("Predictor", "t value", "P-value"))
 ```
+
+_Note_: The p-values from Tukey _post-hoc_ tests will *always* be higher than p-value from the initial model. This is because the _post-hoc_ test is correcting for the fact that we are making many pairwise comparisons (we have to compare each treatment to every other treatment), and the chance that we encounter a false positive (inferring significance where the low p-value is due to chance alone) is increasing. In this case, there are `r (nrow(surv_single_coeffs) * (nrow(surv_single_coeffs) - 1)) / 2` total pairwise comparisons.
 
 ```{r plot-survival, warning = FALSE}
 # A box plot with Treatment on x-axis, # live plants/plot on y; agave counts 
@@ -447,7 +456,6 @@ p_js <- round(p_js, digits = 3)
 
 So the estimated probability of survival in the J + S treatment is `r p_js` and the difference in survival probability from the Control treatment is `r p_js` - `r p_c` = `r p_js - p_c`.
 
-
 Note the explanations above do not discuss random effects of plot. So when reporting these values, it is best to say that this is the _average_ effect of treatment on survival.
 
 #### 1.1.b Treatment as multiple predictors
@@ -500,6 +508,8 @@ knitr::kable(x = surv_multi_coeffs[, c(1, 2, 3, 5)],
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
+
+In this table, the row listed as $(Intercept)$ represents the Control treatment.
 
 #### 1.1.c Treatment as multiple predictors with interaction effects
 
@@ -558,6 +568,8 @@ knitr::kable(x = surv_interact_coeffs[, c(1, 2, 3, 5)],
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
+
+In this table, the row listed as $(Intercept)$ represents the Control treatment.
 
 ### 1.2. How does treatment affect agave size?
 
@@ -634,7 +646,45 @@ knitr::kable(x = size_single_coeffs[, c(1, 2, 3, 6)],
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
 
+In this table, the row listed as $(Intercept)$ represents the Control treatment.
+
 _Note_: There are several Plot by Treatment combinations with zero measurements for leaf count and at least one Treatment level (W) where there was a _single_ leaf count measurement. This could potentially influence this particular analysis.
+
+##### Aside: Interpreting linear regression
+In contrast to logistic regression, linear regression is a straighforward additive model:
+
+$$
+\# Leaves = \beta_0 + \beta_1 \times Treatment + b_0
+$$
+
+For this explanation, we will ignore the random intercept effect, $b_0$, so this formula becomes
+
+$$
+\# Leaves = \beta_0 + \beta_1 \times Treatment
+$$
+
+In our model, $\beta_0$ is the intercept of the model, and $\beta_1$ is the coefficient for the Treatment of interest. For the Control treatment, $\beta_1 = 0$, so the formula for the number of leaves of agaves in the Control treatment becomes 
+
+$$
+\# Leaves(Treatment = Control) = \beta_0
+$$
+
+or 
+
+$$
+\#Leaves(Treatment = Control) = `r round(size_single_coeffs[1, 2], digits = 3)`
+$$
+
+To calculate the agave size for any other treatment, we use the formula
+
+$$
+\# Leaves = \beta_0 + \beta_1
+$$
+
+substituting the $\beta_1$ with the coefficient of the Treatment of interest. For example, if we wanted to know the size of an agave in the Hand-pulling treatment, we substitute $\beta_0 = `r round(size_single_coeffs[1, 2], digits = 3)`$ and $\beta_1 = `r round(size_single_coeffs[2, 2], digits = 3)`$, for an average size of `r round(size_single_coeffs[1, 2] + size_single_coeffs[2, 2], digits = 3)` leaves. 
+
+
+Another way of interpreting these coefficients is that they show the _difference_ in size from the control treatment. That is, the coefficient for the Hand-pulling treatment, `r round(size_single_coeffs[2, 2], digits = 3)`, is the difference in size between plants in the Control treatment and plants in the Hand-pulling treatment.
 
 ```{r size-single-post-hoc}
 # Run Tukey post-hoc tests for pairwise comparisons
@@ -696,12 +746,12 @@ agave_size_plot <- ggplot(data = agave_sizes,
        subtitle = "Numbers in plot show mean survivorship for treatment",
        x = "Treatment",
        y = "Number of leaves") +
-  geom_text(data = survive_text_size,
-            label = survive_text_size$mean_survivorship, # referring to bare column won't work
-            nudge_y = 0.7, # move labels above upper whisker
-            mapping = aes(x = Treatment, y = upper_whisker),
-            size = 4,
-            family = "Times New Roman") +
+  # geom_text(data = survive_text_size,
+  #           label = survive_text_size$mean_survivorship, # referring to bare column won't work
+  #           nudge_y = 0.7, # move labels above upper whisker
+  #           mapping = aes(x = Treatment, y = upper_whisker),
+  #           size = 4,
+  #           family = "Times New Roman") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 
@@ -848,15 +898,15 @@ _Note_ in these analyses (Section 2), only treatments W and H _sensu stricto_ we
 ### 2.1 How do selected treatments and agave size affect percent cover?
 
 ```{r cover-data-live-prep, warning = FALSE}
-# Need to reduce data to only treatments H and W
-cover_data_live <- live_agave_data[live_agave_data$Treatment %in% c("C", "H", "W"), ]
+# Need to reduce data to only treatments C and H
+cover_data_live <- live_agave_data[live_agave_data$Treatment %in% c("C", "H"), ]
 
 # Drop rows missing percent cover data
 cover_data_live <- cover_data_live[!(is.na(cover_data_live$areial_cover)), ]
 
 cover_data_live$Treatment <- factor(x = cover_data_live$Treatment)
 
-# Only 18 rows of data when H, W, and C are included. Too few for mixed-effects
+# Only 17 rows of data when H and C are included. Too few for mixed-effects
 # Running linear regression early so we can add lines to plot
 cover_size_model <- lm(formula = areial_cover ~ Treatment + live_leaf_number, data = cover_data_live)
 cover_size_summary <- summary(cover_size_model)
@@ -895,10 +945,10 @@ cover_size_plot <- ggplot(data = cover_data_live,
   geom_line(data = control_line, color = "#787878") +
   geom_line(data = hand_pulling_line, color = "#D8B365") +
   geom_point(size = 2.0, alpha = 0.75) +
-  scale_fill_manual(values = c("#787878", "#D8B365", "#5AB4AC"),
-                    labels = c("Control", "Hand-pulling", "Weed-eating")) +
-  scale_shape_manual(values = c(21, 22, 24), # Circle, square, triangle
-                     labels = c("Control", "Hand-pulling", "Weed-eating")) +
+  scale_fill_manual(values = c("#787878", "#D8B365"),
+                    labels = c("Control", "Hand-pulling")) +
+  scale_shape_manual(values = c(21, 22), # Circle, square
+                     labels = c("Control", "Hand-pulling")) +
   xlab(label = "Number of leaves") +
   ylab(label = "Percent cover") +
   ggtitle(label = "Figure 2.1. Percent Lehmann cover by agave size") +
@@ -916,7 +966,7 @@ $$
 \% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves + b_0
 $$
 
-Where $b_0$ is the random intercept for plot. However, when considering _only_ the samples from H and W (and control) treatments, there are too few samples (N = `r sum(!is.na(cover_data_live$live_leaf_number))`) to run a mixed effect model. A good old fashioned linear regression model is then:
+Where $b_0$ is the random intercept for plot. However, when considering _only_ the samples from H and Control) treatments, there are too few samples (N = `r sum(!is.na(cover_data_live$live_leaf_number))`) to run a mixed effect model. A good old fashioned linear regression model is then:
 
 $$
 \% Lehmann \enspace cover = \beta_0 + \beta_1 \times Treatment + \beta_2 \times \# Leaves
@@ -934,9 +984,6 @@ colnames(cover_size_coeffs) <- c("Predictor", "Estimate", "Std.Error", "t.value"
 # Replace "Treatment" values
 cover_size_coeffs$Predictor <- gsub(pattern = "TreatmentH",
                                replacement = "Hand-pulling",
-                               x = cover_size_coeffs$Predictor)
-cover_size_coeffs$Predictor <- gsub(pattern = "TreatmentW",
-                               replacement = "Weed-eating",
                                x = cover_size_coeffs$Predictor)
 
 # Replace live_leave_number with human-readable version
@@ -957,7 +1004,46 @@ knitr::kable(x = cover_size_coeffs[, c(1, 2, 3, 5)],
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
 ```
 
-_Note_: Similar to question 1.2, there are several H/W treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
+_Note_: Similar to question 1.2, there are several H treatments with zero leaf counts. It may be necessary instead to evaluate a model that does not include the number of agave leaves.
+
+#### 2.1.b How does agave size in control treatments effect percent cover?
+This analysis is identical to the one in 2.1, above, but includes only plants from the Control treatment.
+
+```{r control-cover-size}
+control_data_live <- cover_data_live[cover_data_live$Treatment == "C", ]
+control_size_model <- lm(formula = areial_cover ~ live_leaf_number, data = control_data_live)
+control_size_summary <- summary(control_size_model)
+
+control_size_coeffs <- control_size_summary$coefficients
+
+# Coerce to a data frame
+control_size_coeffs <- as.data.frame(control_size_coeffs)
+
+# Predict the line of the relationship
+control_limits <- c(min(control_data_live$live_leaf_number),
+                    max(control_data_live$live_leaf_number))
+control_line <- data.frame(Treatment = "C",
+                              live_leaf_number = control_limits)
+control_line$areial_cover <- predict(control_size_model, newdata = control_line)
+rm(control_limits)
+
+# Plot the data
+control_size_plot <- ggplot(data = control_data_live, 
+                          mapping = aes(x = live_leaf_number, y = areial_cover)) +
+  geom_line(data = control_line, color = "#787878") +
+  geom_point(size = 2.0, alpha = 0.75, fill = "#787878") +
+  xlab(label = "Number of leaves") +
+  ylab(label = "Percent cover") +
+  ggtitle(label = "Figure 2.1. Percent Lehmann cover by agave size in Control Treatment") +
+  theme_bw() +
+  theme(text = element_text(family = "Times New Roman"))
+print(control_size_plot)
+suppressMessages(expr = ggsave(filename = "output/control-size-plot.pdf", plot = cover_size_plot))
+
+```
+
+
+
 
 ### 2.2 How do selected treatments and the presence of a live agave affect percent cover?
 
