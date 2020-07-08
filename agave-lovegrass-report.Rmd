@@ -4,24 +4,20 @@ author: "Jeff Oliver"
 date: "March 25, 2020"
 output: 
   pdf_document: default
-  word_document: default
 ---
 
 ```{r setup, include = FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, fig.height = 3)
 suppressPackageStartupMessages(library(lme4))       # glmer logistic models
-suppressPackageStartupMessages(library(broom))      # Clean up stats tables
 suppressPackageStartupMessages(library(lmerTest))   # lme models
+suppressPackageStartupMessages(library(lattice))    # Q-Q plots
+suppressPackageStartupMessages(library(car))        # Levene test homogeneity
 suppressPackageStartupMessages(library(emmeans))    # post-hoc tests
+suppressPackageStartupMessages(library(broom))      # Clean up stats tables
 suppressPackageStartupMessages(library(dplyr))      # Data wrangling
 suppressPackageStartupMessages(library(ggplot2))    # Visualization
 suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
 # loadfonts()
-```
-
-```{r}
-# TODO
-# 3. Add median # leaves per treatment table SKIP?
 ```
 
 # Summary
@@ -770,6 +766,35 @@ suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = a
 ```
 `r size_caption`
 
+##### Assumptions
+
+**Linearity**
+
+```{r size-linearity}
+plot(x = resid(size_single_model),
+     y = agave_sizes$live_leaf_number,
+     xlab = "Residuals",
+     ylab = "# Leaves")
+```
+
+**Homogeneity of variance**
+
+```{r size-homogeneity-levene}
+leveneTest(residuals(size_single_model) ~ agave_sizes$Treatment)
+```
+
+```{r size_homogenety-visual}
+plot(size_single_model,
+     xlab = "Fitted values",
+     ylab = "Standardized residuals")
+```
+
+**Normality of residuals**
+
+```{r size-normality}
+qqmath(size_single_model)
+```
+
 #### 1.2.b Treatment as multiple predictors
 
 The second model separates out the four treatment types into separate variables:
@@ -1095,6 +1120,37 @@ print(cover_interaction_plot)
 suppressMessages(expr = ggsave(filename = "output/cover-interaction-plot.pdf", plot = cover_interaction_plot))
 ```
 
+##### Assumptions
+
+**Linearity**
+
+```{r cover-linearity}
+plot(x = resid(cover_interaction_model),
+     y = cover_data_live$areial_cover,
+     xlab = "Residuals",
+     ylab = "Percent cover E. lehmanniana")
+```
+
+**Homogeneity of variance**
+
+```{r cover-homogeneity-levene}
+leveneTest(residuals(cover_interaction_model) ~ cover_data_live$Treatment)
+```
+
+```{r cover-homogenety-visual}
+plot(x = predict(cover_interaction_model, type = "response"),
+     y = resid(cover_interaction_model),
+     xlab = "Fitted values",
+     ylab = "Standardized residuals")
+abline(h = 0, lty = 2)
+```
+
+**Normality of residuals**
+
+```{r cover-normality}
+plot(cover_interaction_model, which = 2)
+```
+
 
 ### 2.2 How do selected treatments and the presence of a live agave affect percent cover?
 
@@ -1188,6 +1244,35 @@ knitr::kable(x = cover_pa_coeffs[, c(1, 2, 3, 6)],
              row.names = FALSE,
              digits = 5,
              col.names = c("Predictor", "Coefficient Estimate", "Error", "P-value"))
+```
+
+##### Assumptions
+
+**Linearity**
+
+```{r cover-pa-linearity}
+plot(x = resid(cover_model_pa),
+     y = cover_data_all$areial_cover,
+     xlab = "Residuals",
+     ylab = "Percent cover E. lehmanniana")
+```
+
+**Homogeneity of variance**
+
+```{r cover-pa-homogeneity-levene}
+leveneTest(residuals(cover_model_pa) ~ cover_data_all$Treatment)
+```
+
+```{r cover-pa-homogenety-visual}
+plot(cover_model_pa,
+     xlab = "Fitted values",
+     ylab = "Standardized residuals")
+```
+
+**Normality of residuals**
+
+```{r cover-pa-normality}
+qqmath(cover_model_pa)
 ```
 
 ## 3. How does percent cover affect survival and size of agaves?

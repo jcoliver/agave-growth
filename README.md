@@ -7,7 +7,8 @@ lehmanniana_, and agave, _Agave_ sp.
 The three primary questions are:
 
 1. How do various treatments affect agave survival and growth, where:
-    + survival is measured by the number of live plants in a row, and
+    + survival is measured by whether an individual plant survived the 
+    experiment, and
     + growth is measured by the number of leaves from three plants in a row
 2. How do the weed-eating and hand-pulling treatments affect agave growth and 
 percent cover of Lehmann lovegrass?
