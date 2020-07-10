@@ -1097,7 +1097,7 @@ control_line$areial_cover <- predict(cover_interaction_model, newdata = control_
 
 hand_pulling_line <- data.frame(Treatment = "H",
                                    live_leaf_number = hand_pulling_limits)
-hand_pulling_line$areial_cover <- predict(cover_size_model, newdata = hand_pulling_line)
+hand_pulling_line$areial_cover <- predict(cover_interaction_model, newdata = hand_pulling_line)
 
 # Plot the data
 cover_interaction_plot <- ggplot(data = cover_data_live, 
