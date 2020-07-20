@@ -17,11 +17,14 @@ suppressPackageStartupMessages(library(broom))      # Clean up stats tables
 suppressPackageStartupMessages(library(dplyr))      # Data wrangling
 suppressPackageStartupMessages(library(ggplot2))    # Visualization
 suppressPackageStartupMessages(library(extrafont))  # For Times New Roman font
-# loadfonts()
+# font_import()  # To import system fonts for use by R
+# loadfonts()    # Because that's what the web says to do
 ```
 
 # Summary
 A trio of questions on agave (_Agave palmeri_) survival and growth as effected by the invasive, Lehmann lovegrass (_Eragrostis lehmanniana_). To address these questions, I used a mixed-model approach, so the plot variable could be included as a random effect.
+
+**Note** This markdown document was used for investigating several types of analyses; development ceased on 20 July 2020. See individual scripts for specifics of data, analyses, and visualizations.
 
 ```{r data-import}
 coronado_data <- read.csv(file = "data/coronado-data-clean.csv",
@@ -282,6 +285,15 @@ if (nrow(surv_single_contrasts) > 0) {
                             pattern = "C - ",
                             replacement = "")
   
+  # Updated emmeans adds parentheses around treatment values, need to remove 
+  # them to match with actual values
+  surv_single_diffs <- gsub(x = surv_single_diffs,
+                            pattern = ")",
+                            replacement = "")
+  surv_single_diffs <- gsub(x = surv_single_diffs,
+                            pattern = "\\(",
+                            replacement = "")
+
   # Will need to use survive_text_counts to get appropriate placement of 
   # asterisks in y dimension
   surv_single_asterisks <- survive_text_counts[survive_text_counts$Treatment %in% surv_single_diffs, ]
@@ -693,6 +705,14 @@ size_single_contrasts <- as.data.frame(pairs(size_single_post_hoc))
 # Only concerned with values relative to control treatment
 size_single_contrasts <- size_single_contrasts[substr(x = size_single_contrasts$contrast, start = 1, stop = 3) == "C -", ]
 
+# Remove parentheses that may be introduced to treatment names in emmeans
+size_single_contrasts$contrast <- gsub(x = size_single_contrasts$contrast,
+                                       pattern = ")",
+                                       replacement = "")
+size_single_contrasts$contrast <- gsub(x = size_single_contrasts$contrast,
+                                       pattern = "\\(",
+                                       replacement = "")
+
 # Make a nice format for printing before reducing to only significant effects
 size_single_contrasts_print <- size_single_contrasts
 size_single_contrasts_print$contrast <- gsub(x = size_single_contrasts_print$contrast,
@@ -709,7 +729,7 @@ if (nrow(size_single_contrasts) > 0) {
   size_single_diffs <- gsub(x = size_single_contrasts$contrast,
                             pattern = "C - ",
                             replacement = "")
-  
+
   # Will need to use survive_text_size to get appropriate placement of asterisks 
   # in y dimension
   size_single_asterisks <- survive_text_size[survive_text_size$Treatment %in% size_single_diffs, ]
