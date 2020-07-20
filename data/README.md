@@ -1,29 +1,23 @@
 # README for data
 
+## Files included
++ coronado-data-original.xlsx: Original Excel data file
++ coronado-data-clean.csv: Updated data file, with manual edits (see below) of original Excel data file, coronado-data-original.xlsx
++ agave-data.csv: Data for all agaves, created by data-preparation.R. Has consistent treatment names and 'Status' column indicating whether plant was alive (1) or dead (0) at end of treatment; note some agaves have a NA in live_leaf_number column. These plants _were_ alive at the end of the experiment; their size was not measured. Thus they can be included in analyses of agave survivorship (response) or presence/absence (predictor), but not of agave size (either response or predictor)
++ agave-size-data.csv: Data for live agaves with size (leaf count) data, created by data-preparation.R; includes a maximum of three agaves per plot/row combination.
+
 ## Summary of data and design
-There are 6 plots (reps). In each large plot, ten rows of agave were planted 
-(20 plants per row) in a lehmann lovegrass (invasive plant) dominated field. 
-Each row is a different treatment. Treatment codes are:
+There are 6 plots (reps). In each large plot, ten rows of agave were planted (20 plants per row) in a Lehmann lovegrass-dominated field. Each row is a different treatment. Treatment codes are:
 
 + J = javelina protection with chicken wire
 + S = shade cloth
-+ W = lehmanns control via weed eating
-+ H = lehmanns control via hand pulling
++ W = Lehmann lovegrass control via weed eating
++ H = Lehmann lovegrass control via hand pulling
 + J+S = javelin protection with chicken wire AND shade cloth
-+ J+W = javelin protection with chicken wire AND lahmanns control via weed eating
-+ S+W = Shade cloth AND lehmanns control via weed eating
-+ W+H = lehmanns control via weed eating AND lehmanns control via hand pulling
++ J+W = javelin protection with chicken wire AND Lehmann lovegrass control via weed eating
++ S+W = Shade cloth AND Lehmann lovegrass control via weed eating
++ W+H = Lehmann lovegrass control via weed eating AND hand pulling
 + C = control (no treatment applied)
-
-Agave seedlings were planted in the spring and last month. Measurements are:
-
-1. On each agave, if the plant was predated upon (was munched by 
-javelina), was dead or was alive and not predated upon.
-2. On THREE agave per row (out of ten), amy measured the number of live leaves. 
-If there were not enough live plants (as is the case mostly, most of our agaves 
-died or were really badly chewed), then no leaves were measured.
-3. On each agave planting (ten per row), amy assessed the amount of lehmanns 
-aerial cover in a meter squared quadrat (with the quadrat centered on the agave)
 
 ## Changes from original data file
 Several alterations to the original Excel file, coronado-data-original.xlsx, 
@@ -42,6 +36,3 @@ leading "L" was removed
 respectively in areial_cover [sic] column. Changed to 10 and 6, respectively
 + Plot 5, row 1, no treatment was assigned (NA) in original Excel file; changed 
 to S+W following consultation with A. Gill 2019-11-01
-
-
-
