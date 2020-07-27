@@ -128,7 +128,7 @@ live_agave_data$live_leaf_number <- as.integer(live_agave_data$live_leaf_number)
 # Drop any remaining rows with NA for leaf count
 live_agave_data <- live_agave_data[!is.na(live_agave_data$live_leaf_number), ]
 
-# For plot & analyses, only consider a maximum of 3 leaves for any 
+# For plot & analyses, only consider a maximum of 3 agaves for any 
 # plot/row/treatment combination (group %>% slice %>% ungroup)
 max_agaves <- 3
 live_agave_data <- live_agave_data %>%
@@ -357,7 +357,8 @@ if (nrow(surv_single_contrasts) > 0) {
             family = "Times New Roman")
 }
 print(agave_count_plot)
-suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
+message("Note, as of 2020-07-27, this figure is no longer saved; see agave-survival-boxplot.R.")
+# suppressMessages(expr = ggsave(filename = "output/agave-count-plot.pdf", plot = agave_count_plot))
 ```
 `r count_caption`
 

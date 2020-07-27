@@ -6,3 +6,4 @@
 rm(list = ls())
 
 ################################################################################
+# Corresponds to 2.1.b in report, but may need to adjust based on assumptions
