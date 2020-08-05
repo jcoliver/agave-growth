@@ -70,6 +70,7 @@ agave_size_data <- agave_size_data[!is.na(agave_size_data$live_leaf_number), ]
 max_agaves <- 3
 agave_size_data <- agave_size_data %>%
   group_by(plot, Row) %>%
+  arrange(plant.num) %>%
   slice(1:max_agaves) %>%
   ungroup()
 

@@ -133,6 +133,7 @@ live_agave_data <- live_agave_data[!is.na(live_agave_data$live_leaf_number), ]
 max_agaves <- 3
 live_agave_data <- live_agave_data %>%
   group_by(plot, Row) %>%
+  arrange(plant.num) %>%
   slice(1:max_agaves) %>%
   ungroup()
 ```
@@ -801,7 +802,7 @@ plot(x = resid(size_single_model),
 **Homogeneity of variance**
 
 ```{r size-homogeneity-levene}
-leveneTest(residuals(size_single_model) ~ agave_sizes$Treatment)
+leveneTest(residuals(size_single_model) ~ live_agave_data$Treatment)
 ```
 
 ```{r size_homogenety-visual}

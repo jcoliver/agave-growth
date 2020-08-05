@@ -17,7 +17,7 @@ library(dplyr)       # data wrangling
 library(broom.mixed) # tidy up output from statistical output
 library(stringr)     # clean up statistical output
 
-agave_data <- read.csv(file = "data/agave-data.csv", stringsAsFactors = TRUE)
+agave_data <- read.csv(file = "data/agave-data.csv", stringsAsFactors = FALSE)
 
 # Logistic regression, predicting Status (0, 1) from Treatment, with a random
 # intercept of plot
