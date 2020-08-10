@@ -784,7 +784,8 @@ if (nrow(size_single_contrasts) > 0) {
               family = "Times New Roman")
 }
 print(agave_size_plot)
-suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
+message("Note, as of 2020-08-10, this figure is no longer saved; see agave-size-boxplot.R.")
+# suppressMessages(expr = ggsave(filename = "output/agave-size-plot.pdf", plot = agave_size_plot))
 ```
 `r size_caption`
 

@@ -83,35 +83,35 @@ agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y =
 
 analysis_results_file <- "output/agave-survival-analysis-out.csv"
 if (file.exists(analysis_results_file)) {
-  surv_single <- read.csv(file = analysis_results_file, stringsAsFactors = TRUE)
+  analysis_results <- read.csv(file = analysis_results_file, stringsAsFactors = TRUE)
   
   # Select only those rows that had significant effects, and drop the intercept
   # row
-  sig_treatments <- surv_single %>%
+  significant_results <- analysis_results %>%
     filter(coefficient != "(Intercept)") %>%
     filter(p.value < 0.05)
   
   # Only proceed if there was at least one significant effect
-  if (nrow(sig_treatments) > 0) {
+  if (nrow(significant_results) > 0) {
     # The "text" column will be used by ggplot to add the text to the plot 
     # (here, it is just the asterisk character). Rename "coefficient" to 
     # Treatment so it is recognized as the same variable being plotted on the 
     # x-axis
-    sig_treatments <- sig_treatments %>%
+    significant_results <- significant_results %>%
       mutate(text = "*") %>%
       select(coefficient, text) %>%
       rename(Treatment = coefficient)
     
     # Need to merge with survive_text_counts so we know where on the y-axis to 
     # place the asterisks
-    sig_treatments <- merge(x = sig_treatments,
+    significant_results <- merge(x = significant_results,
                             y = survive_text_counts[, c("Treatment", "upper_whisker")])
     
     
     # Add those asterisks to the plot, 
     agave_count_plot <- agave_count_plot +
-      geom_text(data = sig_treatments,
-                label = sig_treatments$text,
+      geom_text(data = significant_results,
+                label = significant_results$text,
                 nudge_y = 0.1,
                 nudge_x = 0.1,
                 mapping = aes(x = Treatment, y = upper_whisker),
