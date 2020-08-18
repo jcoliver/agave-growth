@@ -1001,7 +1001,8 @@ cover_size_plot <- ggplot(data = cover_data_live,
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(cover_size_plot)
-suppressMessages(expr = ggsave(filename = "output/cover-size-plot.pdf", plot = cover_size_plot))
+message("Note, as of 2020-08-17, this figure is no longer saved.")
+# suppressMessages(expr = ggsave(filename = "output/cover-size-plot.pdf", plot = cover_size_plot))
 ```
 Note in the plot above, there are some points with identical values, e.g. there are two observations where the number of leaves was 4 and percent cover was 12%.
 
@@ -1140,7 +1141,8 @@ cover_interaction_plot <- ggplot(data = cover_data_live,
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 print(cover_interaction_plot)
-suppressMessages(expr = ggsave(filename = "output/cover-interaction-plot.pdf", plot = cover_interaction_plot))
+message("Note, as of 2020-08-17, this figure is no longer saved; see lovegrass-cover-plot.R.")
+# suppressMessages(expr = ggsave(filename = "output/cover-interaction-plot.pdf", plot = cover_interaction_plot))
 ```
 
 ##### Assumptions
