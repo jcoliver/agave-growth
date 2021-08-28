@@ -40,6 +40,7 @@ agave_size_plot <- ggplot(data = live_agave_data, mapping = aes(x = Treatment,
 # Only add asterisks if the analysis file was found *and* there are significant
 # differences from the control
 analysis_results_file <- "output/agave-size-analysis-out.csv"
+# analysis_results_file <- "output/summed-agave-size-analysis-out.csv"
 if (file.exists(analysis_results_file)) {
   analysis_results <- read.csv(file = analysis_results_file)
   
@@ -93,4 +94,5 @@ ggsave(filename = "output/agave-size-boxplot.pdf",
        plot = agave_size_plot,
        width = 6.5,
        height = 3,
-       units = "in")
+       units = "in",
+       device = cairo_pdf) # To deal with font issues
