@@ -65,4 +65,11 @@ ggsave(filename = "output/lovegrass-cover-size-plot.pdf",
        plot = cover_plot,
        width = 6.5,
        height = 3,
+       units = "in",
+       device = cairo_pdf)
+
+ggsave(filename = "output/lovegrass-cover-size-plot.png", 
+       plot = cover_plot,
+       width = 6.5,
+       height = 3,
        units = "in")

@@ -96,3 +96,9 @@ ggsave(filename = "output/agave-size-boxplot.pdf",
        height = 3,
        units = "in",
        device = cairo_pdf) # To deal with font issues
+
+ggsave(filename = "output/agave-size-boxplot.png", 
+       plot = agave_size_plot,
+       width = 6.5,
+       height = 3,
+       units = "in")

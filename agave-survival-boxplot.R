@@ -129,4 +129,11 @@ ggsave(filename = "output/agave-survival-boxplot.pdf",
        plot = agave_count_plot,
        width = 6.5,
        height = 3,
+       units = "in",
+       device = cairo_pdf)
+
+ggsave(filename = "output/agave-survival-boxplot.png", 
+       plot = agave_count_plot,
+       width = 6.5,
+       height = 3,
        units = "in")

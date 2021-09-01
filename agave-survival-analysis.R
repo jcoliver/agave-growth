@@ -18,12 +18,20 @@ library(broom.mixed) # tidy up output from statistical output
 library(stringr)     # clean up statistical output
 
 agave_data <- read.csv(file = "data/agave-data.csv", stringsAsFactors = FALSE)
+agave_data <- agave_data %>%
+  mutate(plotrow = paste0(plot, "-", Row))
 
 # Logistic regression, predicting Status (0, 1) from Treatment, with a random
 # intercept of plot
-surv_single <- lme4::glmer(formula = Status ~ Treatment + (1|plot),
+surv_init <- lme4::glmer(formula = Status ~ Treatment + (1|plotrow),
                            data = agave_data,
                            family = binomial(link = "logit"))
+
+# Convergence issues, so run again from starting point of end of last model
+surv_params <- lme4::getME(surv_init, c("theta", "fixef"))
+surv_single <- update(surv_init, 
+                        start = surv_params,
+                        control = lme4::glmerControl(optCtrl = list(maxfun = 2e4)))
 
 # Tidy the output so we can write to file
 surv_single_out <- broom.mixed::tidy(surv_single)
