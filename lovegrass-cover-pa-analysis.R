@@ -6,12 +6,9 @@
 rm(list = ls())
 
 ################################################################################
-# Corresponds to 2.2 in report, but may need to adjust based on assumptions
 library(car)         # Levine test for homogeneity
 library(dplyr)       # data wrangling
-library(lmerTest)    # mixed model
-library(merDeriv)    # robust estimates of standard errors
-# library(lme4)        # mixed model
+library(lme4)        # mixed model
 
 # Cover ~ Treatment + Agave present/absent
 # Binomial ~ Categorical + Categorical(Binary)
@@ -32,16 +29,15 @@ cover_data$Treatment <- factor(cover_data$Treatment)
 cover_data$Status <- factor(cover_data$Status)
 
 # Since cover ranges from 0 to 100 percent, should be treated as binomial 
-# response variable; recode to 0-1 scale
-# cover_data <- cover_data %>%
-#   mutate(aerial_cover = aerial_cover/100)
+# response variable; recode to 0-1 scale (in model) and add 100 as weights
+cover_data <- cover_data %>%
+  mutate(weights = 100)
 
-# Run linear model with plot as random effect
-cover_model_pa <- lme4::lmer(formula = aerial_cover ~ Treatment + Status + (1|plotrow),
-                                 data = cover_data)
-# cover_model_pa <- lme4::glmer(formula = aerial_cover ~ Treatment + Status + (1|plotrow),
-#                                  data = cover_data,
-#                               family = "binomial")
+# Run glm with plotrow as random effect
+cover_model_pa <- lme4::glmer(formula = aerial_cover/weights ~ Treatment + Status + (1|plotrow),
+                                  data = cover_data,
+                                  family = "binomial",
+                                  weights = weights)
 
 # Check assumptions of linear regression
 # Look at fitted vs. residuals
@@ -55,40 +51,16 @@ qqline(resid(cover_model_pa))
 car::leveneTest(resid(cover_model_pa) ~ cover_data$Treatment)
 # Levene's Test for Homogeneity of Variance (center = median)
 #       Df F value    Pr(>F)    
-# group  2  26.154 5.804e-09 ***
-#       62  
+# group  2  17.639 8.623e-07 ***
+#       62                      
 # Quite heteroscetastic
 
-# Consider adding weights to model
-# https://stackoverflow.com/questions/45788123/general-linear-mixed-effect-glmer-heteroscedasticity-modelling
-
-
+# But does this matter?
+# https://doi.org/10.1111/2041-210X.13434
+# Maybe not too much, but inferences should be interpreted with caution and 
+# future work with larger sample sizes and/or different experimental design
+# should be encouraged
 # Attempts at using sandwich & lmtest::coeftest did not work
-
-# Want to use sandwich estimator, but need to manually get "meat" and "bread" 
-# objects
-cover_meat <- sandwich::meat(x = cover_model_pa)
-cover_bread <- merDeriv::bread.lmerMod(x = cover_model_pa, 
-                                       full = TRUE,
-                                       information = "expected", 
-                                       ranpar = "var")
-cover_sandwich <- sandwich(x = cover_model_pa,
-                           bread. = cover_bread,
-                           meat. = cover_meat)
-# Pass to lmtest::coeftest, but chronic "long vectors not supported" error
-cover_vcovHC <- lmtest::coeftest(x = cover_model_pa,
-                                 vcov. = cover_sandwich)
-# Homoscedasticity violated, so need better standard error estimates
-# use a heteroscedasticity constant model of variance with White's estimator
-cover_vcovHC <- lmtest::coeftest(x = cover_model_pa,
-                                 vcov = merDeriv::bread.lmerMod(x = cover_model_pa))
-
-
-# Doesn't work (sandwich package doesn't work with lmer)
-cover_vcovHC <- lmtest::coeftest(x = cover_model_pa,
-                                 vcov = sandwich::vcovHC(x = cover_model_pa,
-                                                         type = "HC0"))
-
 
 cover_pa_summary <- summary(cover_model_pa)
 
@@ -104,8 +76,8 @@ cover_pa_coeffs <- cbind(Predictor = rownames(cover_pa_coeffs),
 rownames(cover_pa_coeffs) <- NULL
 
 # Update column names
-colnames(cover_pa_coeffs) <- c("Predictor", "Estimate", "Std.Error", "df", 
-                               "t.value", "p.value")
+colnames(cover_pa_coeffs) <- c("Predictor", "Estimate", "Std.Error", 
+                               "z.value", "p.value")
 
 # Replace "Treatment" values
 cover_pa_coeffs$Predictor <- gsub(pattern = "TreatmentH",
@@ -116,7 +88,7 @@ cover_pa_coeffs$Predictor <- gsub(pattern = "TreatmentW",
                                   x = cover_pa_coeffs$Predictor)
 
 # Replace Status1 with human-readable version
-cover_pa_coeffs$Predictor <- gsub(pattern = "Status",
+cover_pa_coeffs$Predictor <- gsub(pattern = "Status1",
                                   replacement = "Agave presence",
                                   x = cover_pa_coeffs$Predictor)
 
