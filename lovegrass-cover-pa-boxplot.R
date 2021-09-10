@@ -6,3 +6,12 @@
 rm(list = ls())
 
 ################################################################################
+
+
+
+
+# Create new column indicating presence or absence of agave
+cover_data$agave <- "Present"
+cover_data$agave[cover_data$Status == 0] <- "Absent"
+cover_data$agave <- factor(x = cover_data$agave)
+
