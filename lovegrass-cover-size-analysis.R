@@ -6,23 +6,20 @@
 rm(list = ls())
 
 ################################################################################
-# Use linear regression to predict percent cover of Lehmann lovegrass from 
-# treatment, number of agave leaves, and interaction. Only considering control 
-# and hand-pulling treatments
+# Use generalized linear regression to predict percent cover of Lehmann 
+# lovegrass from treatment, number of agave leaves, and interaction. Only 
+# considering control and hand-pulling treatments
 
-# Roughly corresponds to 2.1.b in report but results here accommodate 
-# heteroscedasticity
+# Roughly corresponds to 2.1.b in report but results here better model the 
+# response variable
 
-library(car)         # Levene test of homogeneity of variance
-library(MASS)        # studentized residuals
-library(lmtest)      # accommodate heteroscedasticity in standard error estimate
-library(sandwich)    # White's estimator for standard errors
+library(lme4)        # generalized linear model
 library(dplyr)       # data wrangling
 library(broom)       # tidy up output from statistical output
 library(stringr)     # clean up statistical output
 
 # Cover ~ Treatment + Leaves + Treatment x Leaves
-# Continuous ~ Categorical + Continuous
+# Binomial ~ Categorical + Continuous + Categorical x Continuous
 
 cover_data <- read.csv(file = "data/agave-size-data.csv", 
                        stringsAsFactors = FALSE)
@@ -31,65 +28,69 @@ cover_data <- read.csv(file = "data/agave-size-data.csv",
 cover_data <- cover_data %>%
   filter(Treatment %in% c("C", "H"))
 
-cover_model <- lm(formula = aerial_cover ~ Treatment * live_leaf_number,
-                  data = cover_data)
+# Create unique combinations of plot & Row for random effects
+cover_data <- cover_data %>%
+  mutate(plotrow = paste0(plot, "-", Row))
+
+# Since cover ranges from 0 to 100 percent, should be treated as binomial 
+# response variable; recode to 0-1 scale (in model) and add 100 as weights
+cover_data <- cover_data %>%
+  mutate(weights = 100)
+
+# Run glm with plotrow as random effect
+cover_model <- lme4::glmer(formula = aerial_cover/weights ~ Treatment * live_leaf_number + (1|plotrow),
+                           data = cover_data,
+                           family = "binomial",
+                           weights = weights)
 
 # Check assumptions of linear regression
 # Look at fitted vs. residuals
 plot(cover_model, which = 1)
-# Flagged 5, 6, 13 as having "large" residuals
 
 # Q-Q plot for normality of residuals
-plot(cover_model, which = 2)
-# Flagged 6, 12, 13 as deviations from expectations. Plot the distribution 
-# of residuals
-cover_sresids <- MASS::studres(cover_model)
-hist(cover_sresids, freq = FALSE)
-xfit <- seq(min(cover_sresids), max(cover_sresids), length = 50)
-yfit <- dnorm(xfit)
-lines(xfit, yfit)
-# Meh. Small sample size, but not terrible.
+qqnorm(resid(cover_model))
+qqline(resid(cover_model))
 
-# Heteroscedasticity
-plot(cover_model, which = 3)
-# 6, 12, 13 a bit high, and line may have positive slope. Do test
-car::ncvTest(model = cover_model)
-# Non-constant Variance Score Test 
-# Variance formula: ~ fitted.values 
-# Chisquare = 7.946772, Df = 1, p = 0.0048173
-# Looks heteroscedastic. Quite.
+# Levene test for homogeneity
+car::leveneTest(resid(cover_model) ~ cover_data$Treatment)
+# Levene's Test for Homogeneity of Variance (center = median)
+#       Df F value  Pr(>F)  
+# group  1   8.345 0.01125 *
+#       15   
+# Heteroskedastic, but will interpret with caution
 
-# Influential outliers
-plot(cover_model, which = 5)
-# Some observations close to 0.5 Cook's distance. Do an outlier test
-outlierTest(model = cover_model)
-# No Studentized residuals with Bonferroni p < 0.05
-# Largest |rstudent|:
-#   rstudent unadjusted p-value Bonferroni p
-# 6 3.367927          0.0055916     0.095057
-# Looks fine.
+# Extract results for output
+cover_summary <- summary(cover_model)
+cover_coeffs <- cover_summary$coefficients
 
-# Homoscedasticity violated, so need better standard error estimates
-# use a heteroscedasticity constant model of variance with White's estimator
-cover_vcovHC <- lmtest::coeftest(x = cover_model,
-                                 vcov = sandwich::vcovHC(x = cover_model,
-                                                         type = "HC0"))
+# Coerce to a data frame
+cover_coeffs <- as.data.frame(cover_coeffs)
 
-# Tidy the output so we can write to file
-cover_out <- broom::tidy(cover_vcovHC)
+# Add rownames as first column
+cover_coeffs <- cbind(Predictor = rownames(cover_coeffs),
+                         cover_coeffs)
+rownames(cover_coeffs) <- NULL
 
-# Remove the word "Treatment"
-cover_out <- cover_out %>%
-  mutate(term = stringr::str_replace(string = term,
-                                     pattern = "Treatment",
-                                     replacement = ""))
+# Update column names
+colnames(cover_coeffs) <- c("Predictor", "Estimate", "Std.Error", 
+                            "z.value", "p.value")
 
-# Change "statistic" column to z.value and "term" to coefficient
-cover_out <- cover_out %>%
-  rename(z.value = statistic,
-         coefficient = term)
+# Replace "Treatment" values
+cover_coeffs$Predictor <- gsub(pattern = "TreatmentH",
+                               replacement = "Hand-pulling",
+                               x = cover_coeffs$Predictor)
 
-# Write output to file
-write.csv(x = cover_out, 
+# Replace live_leaf_number with human-readable version
+cover_coeffs$Predictor <- gsub(pattern = "live_leaf_number",
+                               replacement = "Agave size",
+                               x = cover_coeffs$Predictor)
+
+# Ensure small p-values are not shown as zero
+cover_coeffs$p.value <- as.character(ifelse(
+  test = cover_coeffs$p.value < 1e-5,
+  yes = signif(x = cover_coeffs$p.value, digits = 5),
+  no = round(x = cover_coeffs$p.value, digits = 5)))
+
+write.csv(x = cover_coeffs, 
           file = "output/lovegrass-cover-size-analysis-out.csv",
           row.names = FALSE)
