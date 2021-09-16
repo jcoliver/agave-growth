@@ -7,3 +7,4 @@ output/*
 !output/.gitkeep
 !output/*.pdf
 !output/*.png
+!output/*.csv

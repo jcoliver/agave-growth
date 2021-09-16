@@ -6,12 +6,19 @@
 rm(list = ls())
 
 ################################################################################
-library(car)         # Levine test for homogeneity
-library(dplyr)       # data wrangling
-library(lme4)        # mixed model
+# Use mixed-effects logistic regression to test for an effect of hand-pulling 
+# and weed-eating treatments on lovegrass percent cover. Presence or absence of
+# an agave is also included in the model.
+
+# Corresponds to 2.2 in deprecated agave-lovegrass-report, but analysis here 
+# better models the response variable
 
 # Cover ~ Treatment + Agave present/absent
 # Binomial ~ Categorical + Categorical(Binary)
+
+library(car)         # Levine test for homogeneity
+library(dplyr)       # data wrangling
+library(lme4)        # mixed model
 
 cover_data <- read.csv(file = "data/agave-data.csv", 
                        stringsAsFactors = FALSE)
@@ -35,9 +42,9 @@ cover_data <- cover_data %>%
 
 # Run glm with plotrow as random effect
 cover_model_pa <- lme4::glmer(formula = aerial_cover/weights ~ Treatment + Status + (1|plotrow),
-                                  data = cover_data,
-                                  family = "binomial",
-                                  weights = weights)
+                              data = cover_data,
+                              family = "binomial",
+                              weights = weights)
 
 # Check assumptions of linear regression
 # Look at fitted vs. residuals

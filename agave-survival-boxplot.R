@@ -12,8 +12,7 @@ rm(list = ls())
 # different survival probability from Control treatment. These asterisks are 
 # drawn from the output of logistic mixed-models of agave-survival-analysis.R.
 
-# Corresponds to plot shown in 1.1.a (although some of the data wrangling work 
-# is done in 1.1)
+# Corresponds to plot shown in 1.1.a of deprecated agave-lovegrass-report
 
 library(dplyr)      # data wrangling
 library(ggplot2)    # plotting

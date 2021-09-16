@@ -6,7 +6,12 @@
 rm(list = ls())
 
 ################################################################################
-# Corresponds to Figure 2.1.b in report
+# X-Y scatterplot of percent cover of Lehmann lovegrass versus agave size, as 
+# measured by number of agave leaves. Restricted to control and hand-pulling
+# treatments. Predicted relationships for each of the two treatments are shown 
+# separately
+
+# Corresponds to Figure 2.1.b in deprecated agave-lovegrass-report
 
 library(dplyr)       # data wrangling
 library(ggplot2)     # plotting

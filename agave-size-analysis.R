@@ -10,9 +10,12 @@ rm(list = ls())
 # treatment on agave size (number of leaves). All comparisons are relative to 
 # control, so no post-hoc tests are necessary. 
 
-# Corresponds to 1.2.a in report
+# Corresponds to 1.2.a in deprecated agave-lovegrass-report
 
-library(lmerTest)    # lmer mixed effects model
+# Size ~ Treatment
+# Poisson ~ Categorical
+
+library(lme4)        # lmer mixed effects model
 library(dplyr)       # data wrangling and the %>%
 library(car)         # Levene test of homoscedasticity
 library(broom.mixed) # tidy up output from statistical output

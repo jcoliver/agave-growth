@@ -6,12 +6,16 @@
 rm(list = ls())
 
 ################################################################################
-# Corresponds to Figure 2.2 in report
+# Boxplot of percent cover of Lehmann lovegrass for control, hand-pulling, and 
+# weed-eating treatments, with presence / absence of agave shown separately.
+
+# Corresponds to Figure 2.2 in deprecated agave-lovegrass-report
 
 library(ggplot2)  # plotting
 library(dplyr)    # data wrangling
 library(extrafont)   # Times New Roman font
-source(file = "functions/boxplot_customization.R")
+
+source(file = "functions/boxplot_customization.R") # custom whisker placement
 
 cover_data <- read.csv(file = "data/agave-data.csv", 
                        stringsAsFactors = FALSE)
@@ -24,7 +28,6 @@ cover_data <- cover_data %>%
 cover_data$agave <- "Present"
 cover_data$agave[cover_data$Status == 0] <- "Absent"
 cover_data$agave <- factor(x = cover_data$agave)
-
 
 cover_pa_plot <- ggplot(data = cover_data, 
                         mapping = aes(x = agave, y = aerial_cover,

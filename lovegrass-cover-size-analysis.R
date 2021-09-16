@@ -10,16 +10,15 @@ rm(list = ls())
 # lovegrass from treatment, number of agave leaves, and interaction. Only 
 # considering control and hand-pulling treatments
 
-# Roughly corresponds to 2.1.b in report but results here better model the 
-# response variable
-
-library(lme4)        # generalized linear model
-library(dplyr)       # data wrangling
-library(broom)       # tidy up output from statistical output
-library(stringr)     # clean up statistical output
+# Roughly corresponds to 2.1.b in deprecated agave-lovegrass-report but analysis 
+# here better models the response variable
 
 # Cover ~ Treatment + Leaves + Treatment x Leaves
 # Binomial ~ Categorical + Continuous + Categorical x Continuous
+
+library(lme4)        # generalized linear model
+library(dplyr)       # data wrangling
+library(stringr)     # clean up statistical output
 
 cover_data <- read.csv(file = "data/agave-size-data.csv", 
                        stringsAsFactors = FALSE)

@@ -9,8 +9,7 @@ rm(list = ls())
 # Boxplot of the size of agave plants in each treatment. Only considering a 
 # maximum of three agaves in a unique plot/row/treatment combination
 
-# Corresponds to plot shown in 1.2.a (although some of the data wrangling work 
-# is done in 1.1)
+# Corresponds to plot shown in 1.2.a of deprecated agave-lovegrass-report
 
 library(dplyr)      # data wrangling
 library(ggplot2)    # plotting
@@ -28,10 +27,11 @@ live_agave_data$Treatment <- factor(live_agave_data$Treatment,
                                     levels = c("C", "J", "J+S", "J+H", "J+W",
                                                "S", "S+H", "S+W", "H", "W"))
 
-agave_size_plot <- ggplot(data = live_agave_data, mapping = aes(x = Treatment,
-                                                             y = live_leaf_number)) +
+agave_size_plot <- ggplot(data = live_agave_data, 
+                          mapping = aes(x = Treatment,
+                                        y = live_leaf_number)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
-  labs(title = "Figure 1.2. Agave size by treatment",
+  labs(title = "Agave size by treatment",
        x = "Treatment",
        y = "Number of leaves") +
   theme_bw() +
@@ -40,7 +40,7 @@ agave_size_plot <- ggplot(data = live_agave_data, mapping = aes(x = Treatment,
 # Only add asterisks if the analysis file was found *and* there are significant
 # differences from the control
 analysis_results_file <- "output/agave-size-analysis-out.csv"
-# analysis_results_file <- "output/summed-agave-size-analysis-out.csv"
+
 if (file.exists(analysis_results_file)) {
   analysis_results <- read.csv(file = analysis_results_file)
   
