@@ -60,7 +60,7 @@ cover_plot <- ggplot(data = cover_data,
                      labels = c("Control", "Hand-pulling")) +
   xlab(label = "Number of leaves") +
   ylab(label = "Percent cover") +
-  ggtitle(label = "Figure 2.1.b. Percent Lehmann cover by agave size") +
+  # ggtitle(label = "Figure 2.1.b. Percent Lehmann cover by agave size") +
   theme_bw() +
   theme(text = element_text(family = "Times New Roman"))
 # print(cover_plot)

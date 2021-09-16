@@ -31,7 +31,7 @@ agave_size_plot <- ggplot(data = live_agave_data,
                           mapping = aes(x = Treatment,
                                         y = live_leaf_number)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
-  labs(title = "Agave size by treatment",
+  labs(#title = "Agave size by treatment",
        x = "Treatment",
        y = "Number of leaves") +
   theme_bw() +

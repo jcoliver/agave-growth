@@ -61,3 +61,17 @@ surv_single_out <- surv_single_out %>%
 write.csv(x = surv_single_out, 
           file = "output/agave-survival-analysis-out.csv",
           row.names = FALSE)
+
+# Also output survival for each treatment
+agave_surv <- agave_data %>%
+  group_by(Treatment) %>%
+  summarize(Live = sum(Status == 1),
+            Total = n()) %>%
+  mutate(Survival = Live/Total) %>%
+  select(-Live, -Total) %>%
+  ungroup()
+
+# Write output to file
+write.csv(x = agave_surv,
+          file = "output/agave-survival-values.csv",
+          row.names = FALSE)

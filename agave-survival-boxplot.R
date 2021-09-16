@@ -64,7 +64,7 @@ agave_counts$Treatment <- factor(agave_counts$Treatment,
 # output/agave-survival-analysis-out.csv
 agave_count_plot <- ggplot(data = agave_counts, mapping = aes(x = Treatment, y = num_alive)) +
   stat_summary(fun.data = boxplot_quantiles, geom = "boxplot") +
-  labs(title = "Figure 1.1. Agave survival by treatment",
+  labs(#title = "Figure 1.1. Agave survival by treatment",
        x = "Treatment",
        y = "Number of live agaves") +
   geom_text(data = survive_text_counts,
