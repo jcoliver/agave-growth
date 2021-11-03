@@ -62,7 +62,8 @@ write.csv(x = surv_single_out,
           file = "output/agave-survival-analysis-out.csv",
           row.names = FALSE)
 
-# Also output survival for each treatment
+# Also output observed and predicted survival
+# Calculate observed survival
 agave_surv <- agave_data %>%
   group_by(Treatment) %>%
   summarize(Live = sum(Status == 1),
@@ -70,6 +71,32 @@ agave_surv <- agave_data %>%
   mutate(Survival = Live/Total) %>%
   select(-Live, -Total) %>%
   ungroup()
+
+# Predicted values, ignoring random effect of plotrow
+# Use coefficients stored in surv_single_out; pull out treatment & estimate 
+# info and replace "(Intercept)" with "C", as it represents control treatment
+agave_surv_coeff <- surv_single_out %>%
+  rename(Treatment = coefficient) %>%
+  select(Treatment, estimate) %>%
+  mutate(Treatment = str_replace(string = Treatment,
+                                 pattern = "\\(Intercept\\)",
+                                 replacement = "C"))
+
+# Calculate probabilities for each of the treatments, b_1 is the vector of 
+# coefficient estimates for each non-control treatment; first element of the 
+# vector corresponds to the control treatment, and is thus 0; b_0 is intercept
+b_0 <- agave_surv_coeff$estimate[1]
+b_1 <- c(0, agave_surv_coeff$estimate[2:nrow(agave_surv_coeff)])
+# Start by calculating e^(b_0 + b_1)
+beta_exp <- exp(b_0 + b_1)
+# Probability is e^(b_0 + b_1) / (1 + e^(b_0 + b_1))
+agave_surv_coeff$probs <- beta_exp / (1 + beta_exp)
+
+# Join the predictions to the observed survival info
+agave_surv <- agave_surv %>%
+  inner_join(agave_surv_coeff) %>%
+  select(-estimate) %>%
+  rename(`Survival Probability` = probs)
 
 # Write output to file
 write.csv(x = agave_surv,

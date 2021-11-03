@@ -45,6 +45,7 @@ standardized variable names and values. Early development on this work was done
 in an RMarkdown file, agave-lovegrass-report.Rmd; the file remains, but much of 
 the analyses are deprecated, corresponding to appropriate files in this 
 top-level directory.
+
 + **data**: raw and tidied data
 + **functions**: custom functions for assistance with data visualization
 + **output**: results of statistical analyses and data visualization files
